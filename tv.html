@@ -1,0 +1,572 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Painel da Casa — TV</title>
+<link rel="icon" href="icone-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  /*
+   * Visual no estilo Apple (tvOS / Lembretes / Calendário): fundo preto, cartões sólidos em cinza do sistema,
+   * hierarquia por tamanho e peso, uma cor por pessoa. Sem vidro: aqui tudo é conteúdo.
+   * Tudo em rem baseado na largura da tela: fica igual em TV 720p, 1080p ou 4K.
+   * CSS sem variáveis e com prefixos -webkit- de propósito (navegador da TV LG).
+   */
+  html { font-size: 1.04vw; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #000; color: #f5f5f7; cursor: none; }
+  body { font-family: -apple-system, "SF Pro Display", Inter, "Segoe UI", Roboto, Arial, sans-serif; font-weight: 500;
+    -webkit-font-smoothing: antialiased; letter-spacing: -.01em; }
+  * { box-sizing: border-box; }
+  ul { list-style: none; margin: 0; padding: 0; }
+  .num { font-variant-numeric: tabular-nums; }
+
+  #tela { height: 100%; padding: 2.6vh 2.6vw 2.4vh; display: flex; flex-direction: column;
+    -webkit-transition: -webkit-transform 2s; transition: transform 2s; }
+
+  /* ---------- topo ---------- */
+  #topo { display: flex; align-items: flex-end; justify-content: space-between; height: 11vh; flex: none; }
+  .sobre { font-size: 1.15rem; color: #98989f; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; }
+  #dia { font-size: 2.9rem; font-weight: 700; line-height: 1.1; letter-spacing: -.025em; }
+  #direita { display: flex; align-items: center; }
+  #clima { display: flex; align-items: center; margin-right: 2.4rem; }
+  #clima svg { width: 3.6rem; height: 3.6rem; margin-right: .8rem; }
+  #clima .temp { font-size: 2.7rem; font-weight: 600; line-height: 1; letter-spacing: -.03em; }
+  #clima .det { font-size: 1.05rem; color: #98989f; margin-top: .3rem; font-weight: 500; }
+  #hora { font-size: 4.6rem; font-weight: 700; letter-spacing: -.04em; line-height: .95; }
+
+  /* ---------- cartões ---------- */
+  #meio { flex: 1; display: flex; min-height: 0; margin-top: 2vh; }
+  #tarefas { flex: 1.6; display: flex; flex-direction: column; min-height: 0; margin-right: 1rem; }
+  #colunas { flex: 1; display: flex; min-height: 0; }
+  #colunas .cartao { flex: 1; }
+  #colunas .cartao + .cartao { margin-left: 1rem; }
+  #b-casal { height: 29%; margin-top: 1rem; flex: none; }
+  #b-casal ul { display: flex; flex-wrap: wrap; align-content: flex-start; }
+  #b-casal li.tarefa { width: 50%; padding-right: 1rem; }
+
+  .cartao { background: #1c1c1e; border-radius: 1.5rem; padding: 1.2rem 1.4rem 1rem; display: flex;
+    flex-direction: column; min-height: 0; position: relative; overflow: hidden; }
+  .cab { display: flex; align-items: baseline; justify-content: space-between; flex: none; }
+  .cab h2 { margin: 0; font-size: 1.75rem; font-weight: 700; letter-spacing: -.02em; }
+  .cab .conta { font-size: 1.25rem; color: #98989f; font-weight: 600; }
+  .barra { height: .32rem; background: #2c2c2e; border-radius: 1rem; margin: .75rem 0 .5rem; flex: none; overflow: hidden; }
+  .barra b { display: block; height: 100%; border-radius: 1rem; width: 0;
+    -webkit-transition: width .8s ease; transition: width .8s ease; }
+  .cartao ul { flex: 1; min-height: 0; overflow: hidden; }
+
+  .tarefa { display: flex; align-items: flex-start; font-size: 1.45rem; line-height: 1.3; padding: .42rem 0; }
+  .ck { flex: none; width: 1.5rem; height: 1.5rem; border-radius: 50%; border: .13rem solid #48484a;
+    margin: .06rem .85rem 0 0; position: relative; }
+  .feita .ck { border-color: transparent; }
+  .feita .ck:after { content: ""; position: absolute; left: .45rem; top: .2rem; width: .35rem; height: .7rem;
+    border: solid #fff; border-width: 0 .16rem .16rem 0; -webkit-transform: rotate(45deg); transform: rotate(45deg); }
+  .feita .txt { color: #636366; }
+  .tag { font-size: .85rem; font-weight: 700; border-radius: .45rem; padding: .08rem .5rem; margin-left: .55rem;
+    vertical-align: .18rem; letter-spacing: 0; }
+  .tag.atrasada { background: #3a1d1b; color: #ff6961; }
+  .tag.agora { background: #163a24; color: #30d158; }
+  .feita .tag { opacity: .45; }
+  .mais { font-size: 1.15rem; color: #98989f; padding-top: .3rem; font-weight: 600; }
+  .vazio { font-size: 1.3rem; color: #636366; padding-top: .4rem; }
+
+  /* uma cor por pessoa (cores do sistema da Apple, versão escura) */
+  .p1 .cab h2, .t-p1 { color: #ff9f0a; }
+  .p2 .cab h2, .t-p2 { color: #40c8e0; }
+  .casal .cab h2, .t-casal { color: #bf5af2; }
+  .p1 .barra b, .p1 .feita .ck, .bg-p1 { background: #ff9f0a; }
+  .p2 .barra b, .p2 .feita .ck, .bg-p2 { background: #40c8e0; }
+  .casal .barra b, .casal .feita .ck, .bg-casal { background: #bf5af2; }
+
+  .completo .conta { color: #30d158; }
+  .festa { -webkit-animation: brilho 1.2s ease-in-out 2; animation: brilho 1.2s ease-in-out 2; }
+  @-webkit-keyframes brilho { 50% { box-shadow: inset 0 0 0 .2rem rgba(48, 209, 88, .7); } }
+  @keyframes brilho { 50% { box-shadow: inset 0 0 0 .2rem rgba(48, 209, 88, .7); } }
+  .confete { position: absolute; top: -1rem; width: .5rem; height: .9rem; border-radius: .2rem;
+    -webkit-animation: cair 2.4s ease-in forwards; animation: cair 2.4s ease-in forwards; }
+  @-webkit-keyframes cair { to { -webkit-transform: translateY(40rem) rotate(540deg); opacity: 0; } }
+  @keyframes cair { to { transform: translateY(40rem) rotate(540deg); opacity: 0; } }
+
+  /* ---------- agenda ---------- */
+  #agenda { flex: 1; }
+  #agenda .cab { margin-bottom: .7rem; }
+  .legenda { font-size: 1.05rem; font-weight: 600; }
+  .legenda span { margin-left: 1rem; }
+  .ev { display: flex; align-items: stretch; padding: .5rem 0; }
+  .ev .h { flex: none; width: 5rem; font-size: 1.3rem; font-weight: 600; line-height: 1.35; color: #98989f; }
+  .ev .h small { font-size: 1rem; }
+  .ev .cor { flex: none; width: .3rem; border-radius: 1rem; margin-right: .95rem; }
+  .ev .t { font-size: 1.45rem; line-height: 1.3; font-weight: 600; }
+  .ev .l { font-size: 1.1rem; color: #98989f; margin-top: .1rem; }
+  .ev.passou { opacity: .38; }
+
+  /* ---------- rodapé ---------- */
+  #rodape { height: 19vh; flex: none; display: flex; margin-top: 1rem; }
+  #recado { flex: 1.25; margin-right: 1rem; justify-content: center; }
+  .rotulo { font-size: 1rem; color: #98989f; text-transform: uppercase; letter-spacing: .06em; font-weight: 700; }
+  #recado .texto { font-size: 1.7rem; font-weight: 600; line-height: 1.3; margin-top: .4rem; overflow: hidden;
+    display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; letter-spacing: -.015em; }
+  #recado .texto.medio { font-size: 1.42rem; }
+  #recado .texto.longo { font-size: 1.2rem; }
+  #recado .autor { font-size: 1.05rem; color: #98989f; margin-top: .4rem; }
+  .prox { flex: 1; }
+  .prox + .prox { margin-left: 1rem; }
+  .prox .rotulo { margin-bottom: .5rem; }
+  .prox .rotulo b { color: #f5f5f7; }
+  .prox .linha { font-size: 1.2rem; line-height: 1.5; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .prox .linha .hh { font-weight: 600; display: inline-block; min-width: 3.7rem; color: #98989f; }
+  .prox .linha i { width: .6rem; height: .6rem; border-radius: 50%; display: inline-block; margin-right: .5rem; vertical-align: .12rem; }
+  .prox .linha.tar { color: #98989f; margin-top: .2rem; white-space: normal; max-height: 3.6rem; }
+
+  #status { position: fixed; right: 1.4vw; bottom: .6vh; font-size: .8rem; color: #3a3a3c; z-index: 6; }
+  #status.erro { color: #ff6961; font-size: 1rem; }
+  #demo { position: fixed; top: .7vh; left: 50%; -webkit-transform: translateX(-50%); transform: translateX(-50%);
+    font-size: .8rem; letter-spacing: .12em; color: #ffd60a; font-weight: 700; display: none; z-index: 5; }
+
+  /* ---------- noite ---------- */
+  #noite { position: fixed; left: 0; top: 0; right: 0; bottom: 0; background: #000; display: none; z-index: 4; }
+  #noite div { position: absolute; font-size: 3rem; color: #2c2c2e; font-weight: 700;
+    -webkit-transition: all 3s; transition: all 3s; }
+
+  /* ---------- bom dia ---------- */
+  #bomdia { position: fixed; left: 0; top: 0; right: 0; bottom: 0; display: none; z-index: 3;
+    background: #0b1430; background: linear-gradient(180deg, #0a1330 0%, #1b2550 42%, #4b3a5c 72%, #9a6248 100%);
+    padding: 4.5vh 3.4vw 3.6vh; flex-direction: column; }
+  #bomdia.ativo { display: flex; }
+  .bd-topo { display: flex; justify-content: space-between; align-items: flex-start; flex: none; }
+  .bd-ola { font-size: 2.4rem; font-weight: 600; color: #ffd8a8; letter-spacing: -.02em; }
+  .bd-nomes { font-size: 5.6rem; font-weight: 800; letter-spacing: -.045em; line-height: 1; margin-top: .3rem; }
+  .bd-data { font-size: 1.6rem; color: #c7c7d1; margin-top: .9rem; font-weight: 500; }
+  .bd-hora { font-size: 6rem; font-weight: 700; letter-spacing: -.045em; line-height: 1; }
+  .bd-meio { display: flex; margin-top: 4.5vh; flex: none; }
+  .bd-clima { display: flex; align-items: center; margin-right: 3.5rem; }
+  .bd-clima svg { width: 7rem; height: 7rem; margin-right: 1.2rem; }
+  .bd-clima .temp { font-size: 5.6rem; font-weight: 600; letter-spacing: -.05em; line-height: 1; }
+  .bd-clima .det { font-size: 1.35rem; color: #d1d1d6; margin-top: .4rem; }
+  .bd-clima .dica { font-size: 1.35rem; color: #ffd8a8; font-weight: 600; margin-top: .35rem; }
+  .bd-hoje { flex: 1; background: rgba(0, 0, 0, .28); border-radius: 1.5rem; padding: 1.3rem 1.6rem; }
+  .bd-hoje .linha { font-size: 1.55rem; line-height: 1.45; font-weight: 500; }
+  .bd-hoje .linha b { font-weight: 700; }
+  .bd-manha { flex: 1; min-height: 0; display: flex; flex-direction: column; margin-top: 3.5vh; }
+  .bd-manha .titulo { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 1rem; flex: none; }
+  .bd-manha h3 { margin: 0; font-size: 2.1rem; font-weight: 700; letter-spacing: -.02em; }
+  .bd-manha .pronto { font-size: 1.5rem; font-weight: 700; color: #30d158; }
+  .bd-cols { flex: 1; min-height: 0; display: flex; }
+  .bd-col { flex: 1; background: rgba(28, 28, 30, .78); border-radius: 1.5rem; padding: 1.2rem 1.4rem; overflow: hidden; }
+  .bd-col + .bd-col { margin-left: 1rem; }
+  .bd-col .tarefa { font-size: 1.7rem; padding: .5rem 0; }
+  .bd-col .ck { width: 1.75rem; height: 1.75rem; }
+  .bd-col .feita .ck:after { left: .55rem; top: .26rem; width: .4rem; height: .8rem; }
+  .bd-vazio { font-size: 1.5rem; color: #d1d1d6; background: rgba(28, 28, 30, .6); border-radius: 1.5rem; padding: 1.4rem 1.6rem; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .festa, .confete { -webkit-animation: none; animation: none; display: none; }
+    #tela, .barra b { -webkit-transition: none; transition: none; }
+  }
+</style>
+</head>
+<body>
+<div id="tela">
+  <div id="topo">
+    <div><div class="sobre" id="semana">&nbsp;</div><div id="dia">&nbsp;</div></div>
+    <div id="direita"><div id="clima"></div><div id="hora" class="num">--:--</div></div>
+  </div>
+  <div id="meio">
+    <div id="tarefas">
+      <div id="colunas">
+        <div class="cartao p1" id="b-p1"></div>
+        <div class="cartao p2" id="b-p2"></div>
+      </div>
+      <div class="cartao casal" id="b-casal"></div>
+    </div>
+    <div class="cartao" id="agenda"></div>
+  </div>
+  <div id="rodape">
+    <div class="cartao" id="recado"></div>
+    <div class="cartao prox" id="prox-1"></div>
+    <div class="cartao prox" id="prox-2"></div>
+  </div>
+</div>
+<div id="bomdia"></div>
+<div id="noite"><div class="num"></div></div>
+<div id="demo">MODO DEMONSTRAÇÃO</div>
+<div id="status"></div>
+
+<script src="config.js"></script>
+<script src="nucleo.js"></script>
+<script src="painel.js"></script>
+<script>
+(function () {
+  var esc = Painel.esc, pad = Nucleo.pad;
+  var CONFERIR_MS = 10000, COMPLETO_MS = 5 * 60000, CLIMA_MS = 30 * 60000, RECARREGAR_MS = 6 * 3600000;
+  var inicio = Date.now();
+  var estado = Painel.lerCache(), versao = null, ultimoCompleto = 0, ocupado = false;
+  var completoAntes = null, ultimoMinuto = '', modo = '', climaDados = null;
+  var forcado = (location.search.match(/[?&]tela=(\w+)/) || [])[1];  // ?tela=bomdia para testar
+
+  function $(id) { return document.getElementById(id); }
+  function hojeLocal() { return Nucleo.paraTexto(new Date()); }
+  function minutosAgora() { var d = new Date(); return d.getHours() * 60 + d.getMinutes(); }
+  function dentro(f) {
+    if (!f) return false;
+    var m = minutosAgora();
+    return f.de > f.ate ? (m >= f.de || m < f.ate) : (m >= f.de && m < f.ate);
+  }
+
+  /* ---------- relógio e modos (noite → bom dia → dia) ---------- */
+
+  function modoAtual() {
+    if (forcado) return forcado;
+    if (!estado) return 'dia';
+    if (dentro(estado.noite)) return 'noite';
+    if (dentro(estado.bom_dia)) return 'bomdia';
+    return 'dia';
+  }
+
+  function relogio() {
+    var agora = new Date(), hm = pad(agora.getHours()) + ':' + pad(agora.getMinutes());
+    if (hm === ultimoMinuto) return;
+    ultimoMinuto = hm;
+    $('hora').innerHTML = hm;
+    var ext = Nucleo.dataPorExtenso(hojeLocal()).split(', ');
+    $('semana').innerHTML = ext[0];
+    $('dia').innerHTML = ext[1];
+    trocarModo();
+    if (estado) { desenharAgenda(); if (modo === 'bomdia') desenharBomDia(); }
+  }
+
+  function trocarModo() {
+    var novo = modoAtual(), antes = modo;
+    modo = novo;
+    $('noite').style.display = novo === 'noite' ? 'block' : 'none';
+    $('bomdia').className = novo === 'bomdia' ? 'ativo' : '';
+    if (novo === 'noite') {
+      var d = $('noite').firstChild;
+      d.innerHTML = ultimoMinuto;
+      d.style.left = (10 + Math.random() * 70) + '%';
+      d.style.top = (10 + Math.random() * 70) + '%';
+    } else if (antes === 'noite') {
+      conferir(true);
+    }
+    if (novo === 'bomdia' && antes !== 'bomdia' && estado) desenharBomDia();
+  }
+
+  function mexerUmPouco() {
+    var dx = Math.round(Math.random() * 6 - 3), dy = Math.round(Math.random() * 6 - 3);
+    var t = 'translate(' + dx + 'px,' + dy + 'px)';
+    $('tela').style.webkitTransform = t; $('tela').style.transform = t;
+  }
+
+  /* ---------- dados ---------- */
+
+  function conferir(forcar) {
+    if (ocupado || (modo === 'noite' && !forcar)) return;
+    if (Date.now() - inicio > RECARREGAR_MS && navigator.onLine !== false) { location.reload(); return; }
+    var precisaTudo = forcar || !versao || Date.now() - ultimoCompleto > COMPLETO_MS ||
+      (estado && estado.hoje !== hojeLocal());
+    ocupado = true;
+    var p = precisaTudo ? carregar() : Painel.versao().then(function (v) {
+      if (String(v.versao) !== String(versao)) return carregar();
+      situacao(null);
+    });
+    p.then(function () { ocupado = false; }, function (err) { ocupado = false; situacao(err); });
+  }
+
+  function carregar() {
+    return Painel.estado().then(function (e) {
+      estado = e; versao = e.versao; ultimoCompleto = Date.now();
+      Painel.guardarCache(e);
+      desenhar();
+      situacao(null);
+    });
+  }
+
+  function situacao(err) {
+    var s = $('status');
+    if (err) {
+      s.className = 'erro';
+      s.innerHTML = '● ' + esc(err.message || 'sem conexão') + ' — tentando de novo';
+    } else {
+      s.className = '';
+      s.innerHTML = 'atualizado ' + Painel.horaAgora();
+    }
+  }
+
+  /* ---------- painel do dia ---------- */
+
+  function desenhar() {
+    $('demo').style.display = estado.demo ? 'block' : 'none';
+    var completo = {};
+    for (var i = 0; i < Nucleo.QUEM.length; i++) {
+      var q = Nucleo.QUEM[i];
+      completo[q] = desenharCartao(q);
+      if (completoAntes && completo[q] && !completoAntes[q] && modo === 'dia') festa($('b-' + q));
+    }
+    completoAntes = completo;
+    desenharAgenda();
+    desenharRodape();
+    trocarModo();
+    if (modo === 'bomdia') desenharBomDia();
+    clima();
+  }
+
+  function itemTarefa(t) {
+    return '<li class="tarefa' + (t.feita ? ' feita' : '') + '"><span class="ck"></span><span class="txt">' + esc(t.tarefa) +
+      (t.atrasada ? '<span class="tag atrasada">atrasada</span>' : '') + '</span></li>';
+  }
+
+  function desenharCartao(quem) {
+    var el = $('b-' + quem), p = estado.progresso[quem] || { feitas: 0, total: 0 };
+    var lista = [];
+    for (var i = 0; i < estado.tarefas.length; i++) if (estado.tarefas[i].quem === quem) lista.push(estado.tarefas[i]);
+    var completo = p.total > 0 && p.feitas === p.total;
+    var conta = !p.total ? '' : completo ? 'Tudo feito' : p.feitas + ' de ' + p.total;
+    var html = '<div class="cab"><h2>' + esc(estado.nomes[quem]) + '</h2><span class="conta num">' + conta + '</span></div>' +
+      '<div class="barra"><b style="width:' + (p.total ? Math.round(100 * p.feitas / p.total) : 0) + '%"></b></div><ul>';
+    if (!lista.length) html += '<li class="vazio">Nada para hoje</li>';
+    for (i = 0; i < lista.length; i++) html += itemTarefa(lista[i]);
+    el.innerHTML = html + '</ul>';
+    el.className = 'cartao ' + quem + (completo ? ' completo' : '');
+    encaixar(el.getElementsByTagName('ul')[0], 'tarefa');
+    return completo;
+  }
+
+  /* Esconde o fim da lista quando não cabe e mostra "+N". */
+  function encaixar(ul, nome) {
+    if (!ul || ul.scrollHeight <= ul.clientHeight + 2) return;
+    var itens = ul.children, escondidos = 0, mais = document.createElement('li');
+    mais.className = 'mais';
+    ul.appendChild(mais);
+    for (var i = itens.length - 2; i >= 0 && ul.scrollHeight > ul.clientHeight + 2; i--) {
+      itens[i].style.display = 'none';
+      escondidos++;
+      mais.innerHTML = '+ ' + escondidos + ' ' + nome + (escondidos > 1 ? 's' : '');
+    }
+  }
+
+  function festa(el) {
+    el.className += ' festa';
+    var cores = ['#ff9f0a', '#40c8e0', '#bf5af2', '#30d158', '#ffd60a'];
+    for (var i = 0; i < 24; i++) {
+      var c = document.createElement('span');
+      c.className = 'confete';
+      c.style.left = Math.random() * 100 + '%';
+      c.style.background = cores[i % cores.length];
+      c.style.webkitAnimationDelay = c.style.animationDelay = (Math.random() * .8) + 's';
+      el.appendChild(c);
+    }
+    setTimeout(function () {
+      el.className = el.className.replace(' festa', '');
+      var cs = el.querySelectorAll('.confete');
+      for (var j = 0; j < cs.length; j++) cs[j].parentNode.removeChild(cs[j]);
+    }, 4000);
+  }
+
+  function minutos(hhmm) { var p = String(hhmm).split(':'); return +p[0] * 60 + +p[1]; }
+
+  function eventosDeHoje() { return estado.hoje === hojeLocal() ? estado.agenda : []; }
+
+  function desenharAgenda() {
+    var el = $('agenda'), evs = eventosDeHoje(), m = minutosAgora();
+    var html = '<div class="cab"><h2>Agenda</h2><span class="legenda">' +
+      '<span class="t-p1">● ' + esc(estado.nomes.p1) + '</span><span class="t-p2">● ' + esc(estado.nomes.p2) +
+      '</span><span class="t-casal">● Casal</span></span></div><ul>';
+    if (!evs.length) html += '<li class="vazio">Nenhum compromisso hoje</li>';
+    for (var i = 0; i < evs.length; i++) {
+      var e = evs[i], fim = e.termina_outro_dia ? 24 * 60 : minutos(e.fim);
+      var ini = e.inicio ? minutos(e.inicio) : 0;
+      var passou = !e.dia_inteiro && fim <= m, acontecendo = !e.dia_inteiro && ini <= m && m < fim;
+      var hora = e.dia_inteiro ? '<small>dia todo</small>' : e.inicio ? esc(e.inicio) : '<small>até ' + esc(e.fim) + '</small>';
+      html += '<li class="ev' + (passou ? ' passou' : '') + '"><div class="h num">' + hora + '</div><div class="cor bg-' + e.quem + '"></div>' +
+        '<div><div class="t">' + esc(e.titulo) + (acontecendo ? '<span class="tag agora">agora</span>' : '') + '</div>' +
+        (e.local ? '<div class="l">' + esc(e.local) + '</div>' : '') + '</div></li>';
+    }
+    el.innerHTML = html + '</ul>';
+    encaixar(el.getElementsByTagName('ul')[0], 'compromisso');
+  }
+
+  function desenharRodape() {
+    var r = estado.recado || {};
+    $('recado').innerHTML = '<div class="rotulo">Recado</div>' + (r.texto ?
+      '<div class="texto' + (r.texto.length > 90 ? ' longo' : r.texto.length > 50 ? ' medio' : '') + '">' + esc(r.texto) +
+      '</div><div class="autor">' + esc(r.autor ? '— ' + r.autor : '') + '</div>' :
+      '<div class="texto" style="color:#48484a">Nenhum recado. Escreva um pelo celular.</div>');
+
+    for (var n = 0; n < 2; n++) {
+      var d = estado.proximos[n], el = $('prox-' + (n + 1));
+      if (!d) { el.innerHTML = ''; continue; }
+      var dt = Nucleo.paraData(d.data);
+      var nome = n === 0 ? 'Amanhã' : Nucleo.DIAS[dt.getDay()].replace('-feira', '');
+      var html = '<div class="rotulo"><b>' + nome + '</b> · ' + Nucleo.SIGLAS_BONITAS[dt.getDay()] + ' ' + dt.getDate() + '</div>';
+      for (var i = 0; i < d.agenda.length && i < 3; i++) {
+        var e = d.agenda[i];
+        html += '<div class="linha"><span class="hh num">' + (e.dia_inteiro ? 'dia' : esc(e.inicio || '')) + '</span><i class="bg-' + e.quem + '"></i>' + esc(e.titulo) + '</div>';
+      }
+      if (d.agenda.length > 3) html += '<div class="linha" style="color:#98989f">+ ' + (d.agenda.length - 3) + ' compromissos</div>';
+      if (!d.agenda.length) html += '<div class="linha" style="color:#636366">Sem compromissos</div>';
+      if (d.tarefas.length) {
+        var nomes = [];
+        for (i = 0; i < d.tarefas.length && i < 3; i++) nomes.push(esc(d.tarefas[i].tarefa));
+        html += '<div class="linha tar">' + d.tarefas.length + ' tarefa' + (d.tarefas.length > 1 ? 's' : '') + ': ' +
+          nomes.join(', ') + (d.tarefas.length > 3 ? '…' : '') + '</div>';
+      }
+      el.innerHTML = html;
+    }
+  }
+
+  /* ---------- bom dia ---------- */
+
+  function desenharBomDia() {
+    var el = $('bomdia'), evs = eventosDeHoje(), i;
+    var manha = { p1: [], p2: [], casal: [] }, totalManha = 0, feitasManha = 0, totalDia = 0;
+    for (i = 0; i < estado.tarefas.length; i++) {
+      var t = estado.tarefas[i];
+      if (!t.feita) totalDia++;
+      if (!t.manha) continue;
+      (manha[t.quem] || manha.casal).push(t);
+      totalManha++; if (t.feita) feitasManha++;
+    }
+
+    var primeiro = null;
+    for (i = 0; i < evs.length; i++) if (!evs[i].dia_inteiro && evs[i].inicio) { primeiro = evs[i]; break; }
+    var hoje = '<div class="linha"><b>' + (evs.length || 'Nenhum') + '</b> compromisso' + (evs.length === 1 ? '' : 's') + ' hoje' +
+      (primeiro ? ' · o primeiro às <b>' + esc(primeiro.inicio) + '</b>, <span class="t-' + primeiro.quem + '">' + esc(primeiro.titulo) + '</span>' : '') + '</div>' +
+      '<div class="linha"><b>' + totalDia + '</b> tarefa' + (totalDia === 1 ? '' : 's') + ' para fazer no dia</div>' +
+      (estado.recado && estado.recado.texto ? '<div class="linha" style="color:#ffd8a8">“' + esc(estado.recado.texto) + '”</div>' : '');
+
+    var cols = '';
+    for (i = 0; i < Nucleo.QUEM.length; i++) {
+      var q = Nucleo.QUEM[i], lista = manha[q];
+      if (!lista.length) continue;
+      var feitas = 0;
+      for (var j = 0; j < lista.length; j++) if (lista[j].feita) feitas++;
+      cols += '<div class="bd-col ' + q + '"><div class="cab"><h2>' + esc(estado.nomes[q]) + '</h2><span class="conta num">' +
+        (feitas === lista.length ? 'Pronto' : feitas + ' de ' + lista.length) + '</span></div><ul style="margin-top:.6rem">';
+      for (j = 0; j < lista.length; j++) cols += itemTarefa(lista[j]);
+      cols += '</ul></div>';
+    }
+
+    var ext = Nucleo.dataPorExtenso(hojeLocal());
+    el.innerHTML =
+      '<div class="bd-topo"><div><div class="bd-ola">Bom dia,</div><div class="bd-nomes">' + esc(estado.nomes.p1) + ' e ' + esc(estado.nomes.p2) + '</div>' +
+      '<div class="bd-data">' + ext.charAt(0).toUpperCase() + ext.slice(1) + '</div></div><div class="bd-hora num">' + ultimoMinuto + '</div></div>' +
+      '<div class="bd-meio"><div class="bd-clima">' + climaGrande() + '</div><div class="bd-hoje">' + hoje + '</div></div>' +
+      '<div class="bd-manha"><div class="titulo"><h3>Rotina da manhã</h3>' +
+      (totalManha && feitasManha === totalManha ? '<span class="pronto">✓ Tudo pronto. Bom dia!</span>' : '') + '</div>' +
+      (cols ? '<div class="bd-cols">' + cols + '</div>' :
+        '<div class="bd-vazio">Nenhuma tarefa na rotina da manhã. No celular: Nova tarefa › Toda semana › Rotina da manhã.</div>') +
+      '</div>';
+  }
+
+  /* ---------- clima (Open-Meteo, grátis e sem cadastro) ---------- */
+
+  var climaQuando = 0, climaCidade = '';
+  function json(url) {
+    return new Promise(function (ok, falha) {
+      var r = new XMLHttpRequest();
+      r.open('GET', url, true); r.timeout = 20000;
+      r.onload = function () { try { ok(JSON.parse(r.responseText)); } catch (e) { falha(e); } };
+      r.onerror = r.ontimeout = function () { falha(new Error('clima')); };
+      r.send();
+    });
+  }
+
+  function simples(t) {
+    return String(t || '').toLowerCase().replace(/[áàâã]/g, 'a').replace(/[éê]/g, 'e').replace(/í/g, 'i')
+      .replace(/[óôõ]/g, 'o').replace(/ú/g, 'u').replace(/ç/g, 'c').replace(/\s+/g, ' ').trim();
+  }
+
+  function clima() {
+    var cidade = estado && estado.cidade;
+    if (!cidade || (cidade === climaCidade && Date.now() - climaQuando < CLIMA_MS)) return;
+    climaCidade = cidade; climaQuando = Date.now();
+    var chave = 'painel_coord_' + cidade, coord = null;
+    try { coord = JSON.parse(localStorage.getItem(chave)); } catch (e) { }
+    // "Guará, Distrito Federal": busca "Guará" e prefere o resultado que fica no Distrito Federal
+    var partes = cidade.split(','), nome = partes[0].trim(), regiao = simples(partes.slice(1).join(' '));
+    var p = coord ? Promise.resolve(coord) :
+      json('https://geocoding-api.open-meteo.com/v1/search?count=10&language=pt&name=' + encodeURIComponent(nome))
+        .then(function (g) {
+          if (!g.results || !g.results.length) throw new Error('cidade não encontrada');
+          var r = g.results[0];
+          for (var i = 0; regiao && i < g.results.length; i++) {
+            var x = g.results[i], onde = simples([x.admin1, x.admin2, x.admin3, x.country].join(' '));
+            if (onde.indexOf(regiao) >= 0) { r = x; break; }
+          }
+          var c = { lat: r.latitude, lon: r.longitude };
+          try { localStorage.setItem(chave, JSON.stringify(c)); } catch (e) { }
+          return c;
+        });
+    p.then(function (c) {
+      return json('https://api.open-meteo.com/v1/forecast?latitude=' + c.lat + '&longitude=' + c.lon +
+        '&current=temperature_2m,weather_code,is_day&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max' +
+        '&timezone=auto&forecast_days=1');
+    }).then(function (w) {
+      var info = tempo(w.current.weather_code, w.current.is_day);
+      climaDados = {
+        temp: Math.round(w.current.temperature_2m), texto: info.texto, icone: info.icone,
+        min: Math.round(w.daily.temperature_2m_min[0]), max: Math.round(w.daily.temperature_2m_max[0]),
+        chuva: w.daily.precipitation_probability_max ? w.daily.precipitation_probability_max[0] : null
+      };
+      var d = climaDados;
+      $('clima').innerHTML = icone(d.icone) + '<div><div class="temp num">' + d.temp + '°</div>' +
+        '<div class="det">' + d.texto + ' · ' + d.min + '° / ' + d.max + '°' + (d.chuva != null ? ' · chuva ' + d.chuva + '%' : '') + '</div></div>';
+      if (modo === 'bomdia') desenharBomDia();
+    }).then(null, function () { climaQuando = Date.now() - CLIMA_MS + 5 * 60000; });  // tenta de novo em 5 min
+  }
+
+  function climaGrande() {
+    var d = climaDados;
+    if (!d) return '';
+    var dica = d.chuva >= 50 ? 'Leve o guarda-chuva' : d.max >= 30 ? 'Dia quente: beba bastante água' :
+      d.min <= 14 ? 'Manhã fria: leve um casaco' : '';
+    return icone(d.icone) + '<div><div class="temp num">' + d.temp + '°</div><div class="det">' + d.texto + ' · mín ' + d.min +
+      '° · máx ' + d.max + '°' + (d.chuva != null ? ' · chuva ' + d.chuva + '%' : '') + '</div>' +
+      (dica ? '<div class="dica">' + dica + '</div>' : '') + '</div>';
+  }
+
+  function tempo(c, dia) {
+    if (c === 0) return { texto: 'Céu limpo', icone: dia ? 'sol' : 'lua' };
+    if (c <= 2) return { texto: 'Poucas nuvens', icone: dia ? 'solnuvem' : 'lua' };
+    if (c === 3) return { texto: 'Nublado', icone: 'nuvem' };
+    if (c === 45 || c === 48) return { texto: 'Neblina', icone: 'neblina' };
+    if (c >= 51 && c <= 57) return { texto: 'Garoa', icone: 'chuva' };
+    if ((c >= 61 && c <= 67) || (c >= 80 && c <= 82)) return { texto: 'Chuva', icone: 'chuva' };
+    if (c >= 95) return { texto: 'Tempestade', icone: 'raio' };
+    return { texto: 'Nublado', icone: 'nuvem' };
+  }
+
+  function icone(tipo) {
+    var nuvem = '<path d="M20 50h27a11 11 0 0 0 0-22 15 15 0 0 0-29-3 12 12 0 0 0 2 25z" fill="#e5e5ea"/>';
+    var nuvemAlta = '<path d="M20 40h27a11 11 0 0 0 0-22 15 15 0 0 0-29-3 12 12 0 0 0 2 25z" fill="#e5e5ea"/>';
+    var raios = '', s = '';
+    for (var i = 0; i < 8; i++) {
+      var a = i * Math.PI / 4, x1 = 32 + Math.cos(a) * 19, y1 = 32 + Math.sin(a) * 19, x2 = 32 + Math.cos(a) * 26, y2 = 32 + Math.sin(a) * 26;
+      raios += '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="#ffd60a" stroke-width="4" stroke-linecap="round"/>';
+    }
+    if (tipo === 'sol') s = '<circle cx="32" cy="32" r="13" fill="#ffd60a"/>' + raios;
+    else if (tipo === 'lua') s = '<path d="M38 10a22 22 0 1 0 16 34A18 18 0 0 1 38 10z" fill="#f2f2f7"/>';
+    else if (tipo === 'solnuvem') s = '<g transform="translate(-6 -8) scale(.8)"><circle cx="32" cy="32" r="13" fill="#ffd60a"/>' + raios + '</g>' + nuvem;
+    else if (tipo === 'chuva') s = nuvemAlta + '<path d="M22 46l-3 8M32 46l-3 8M42 46l-3 8" stroke="#64d2ff" stroke-width="4" stroke-linecap="round"/>';
+    else if (tipo === 'raio') s = nuvemAlta + '<path d="M34 40l-8 12h7l-3 10 10-14h-7l3-8z" fill="#ffd60a"/>';
+    else if (tipo === 'neblina') s = '<path d="M12 24h40M8 34h48M14 44h36" stroke="#e5e5ea" stroke-width="5" stroke-linecap="round"/>';
+    else s = nuvem;
+    return '<svg viewBox="0 0 64 64">' + s + '</svg>';
+  }
+
+  /* ---------- início ---------- */
+
+  relogio();
+  if (estado) desenhar();
+  conferir(true);
+  setInterval(relogio, 1000);
+  setInterval(function () { conferir(false); }, CONFERIR_MS);
+  setInterval(mexerUmPouco, 120000);
+  setInterval(function () { if (modo !== 'noite') clima(); }, 60000);
+  window.addEventListener('resize', function () { if (estado) desenhar(); });
+  if (Painel.demo) Painel.aoMudarEmOutraAba(function () { conferir(true); });
+})();
+</script>
+</body>
+</html>

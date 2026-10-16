@@ -1,0 +1,11 @@
+{
+  "name": "Painel da Casa",
+  "short_name": "Casa",
+  "display": "standalone",
+  "background_color": "#11151c",
+  "theme_color": "#11151c",
+  "icons": [
+    { "src": "icone-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icone-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
