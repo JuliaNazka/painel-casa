@@ -112,12 +112,22 @@
   #recado .autor { font-size: 1.05rem; color: #98989f; margin-top: .4rem; }
   .prox { flex: 1; }
   .prox + .prox { margin-left: 1rem; }
-  .prox .rotulo { margin-bottom: .5rem; }
+  /* próximos dias: um item por vez, grande, trocando sozinho */
+  .prox .rotulo { display: flex; justify-content: space-between; align-items: baseline; flex: none; }
   .prox .rotulo b { color: #f5f5f7; }
-  .prox .linha { font-size: 1.2rem; line-height: 1.5; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .prox .linha .hh { font-weight: 600; display: inline-block; min-width: 3.7rem; color: #98989f; }
-  .prox .linha i { width: .6rem; height: .6rem; border-radius: 50%; display: inline-block; margin-right: .5rem; vertical-align: .12rem; }
-  .prox .linha.tar { color: #98989f; margin-top: .2rem; white-space: normal; max-height: 3.6rem; }
+  .prox .resumo { text-transform: none; letter-spacing: 0; font-size: .95rem; font-weight: 600; }
+  .giro { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: center;
+    -webkit-transition: opacity .45s ease; transition: opacity .45s ease; }
+  .giro.some { opacity: 0; }
+  .giro .quando { flex: none; font-size: 1.2rem; font-weight: 600; color: #98989f; }
+  .giro .quando i { width: .7rem; height: .7rem; border-radius: 50%; display: inline-block; margin-right: .5rem; vertical-align: .05rem; }
+  .giro .titulo { flex: none; font-size: 1.85rem; font-weight: 700; line-height: 1.2; letter-spacing: -.02em; margin-top: .3rem;
+    overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+  .giro .nada { font-size: 1.4rem; color: #636366; font-weight: 600; }
+  .pontos { flex: none; display: flex; align-items: center; height: .9rem; }
+  .pontos b { width: .42rem; height: .42rem; border-radius: 50%; background: #3a3a3c; margin-right: .38rem; }
+  .pontos b.at { background: #aeaeb2; }
+  .pontos span { font-size: .9rem; color: #98989f; font-weight: 600; }
 
   #status { position: fixed; right: 1.4vw; bottom: .6vh; font-size: .8rem; color: #3a3a3c; z-index: 6; }
   #status.erro { color: #ff6961; font-size: 1rem; }
@@ -161,6 +171,7 @@
   .bd-vazio { font-size: 1.5rem; color: #d1d1d6; background: rgba(28, 28, 30, .6); border-radius: 1.5rem; padding: 1.4rem 1.6rem; }
 
   @media (prefers-reduced-motion: reduce) {
+    .giro { -webkit-transition: none; transition: none; }
     .festa, .confete { -webkit-animation: none; animation: none; display: none; }
     #tela, .barra b { -webkit-transition: none; transition: none; }
   }
@@ -372,16 +383,20 @@
     var html = '<div class="cab"><h2>Agenda</h2><span class="legenda">' +
       '<span class="t-p1">● ' + esc(estado.nomes.p1) + '</span><span class="t-p2">● ' + esc(estado.nomes.p2) +
       '</span><span class="t-casal">● Casal</span></span></div><ul>';
-    if (!evs.length) html += '<li class="vazio">Nenhum compromisso hoje</li>';
+    // o que já terminou sai da lista: a agenda vai andando ao longo do dia
+    var mostrados = 0;
     for (var i = 0; i < evs.length; i++) {
       var e = evs[i], fim = e.termina_outro_dia ? 24 * 60 : minutos(e.fim);
       var ini = e.inicio ? minutos(e.inicio) : 0;
-      var passou = !e.dia_inteiro && fim <= m, acontecendo = !e.dia_inteiro && ini <= m && m < fim;
+      if (!e.dia_inteiro && fim <= m) continue;
+      mostrados++;
+      var acontecendo = !e.dia_inteiro && ini <= m && m < fim;
       var hora = e.dia_inteiro ? '<small>dia todo</small>' : e.inicio ? esc(e.inicio) : '<small>até ' + esc(e.fim) + '</small>';
-      html += '<li class="ev' + (passou ? ' passou' : '') + '"><div class="h num">' + hora + '</div><div class="cor bg-' + e.quem + '"></div>' +
+      html += '<li class="ev"><div class="h num">' + hora + '</div><div class="cor bg-' + e.quem + '"></div>' +
         '<div><div class="t">' + esc(e.titulo) + (acontecendo ? '<span class="tag agora">agora</span>' : '') + '</div>' +
         (e.local ? '<div class="l">' + esc(e.local) + '</div>' : '') + '</div></li>';
     }
+    if (!mostrados) html += '<li class="vazio">' + (evs.length ? 'Nada mais na agenda hoje' : 'Nenhum compromisso hoje') + '</li>';
     el.innerHTML = html + '</ul>';
     encaixar(el.getElementsByTagName('ul')[0], 'compromisso');
   }
@@ -395,23 +410,73 @@
 
     for (var n = 0; n < 2; n++) {
       var d = estado.proximos[n], el = $('prox-' + (n + 1));
-      if (!d) { el.innerHTML = ''; continue; }
+      if (!d) { el.innerHTML = ''; giro[n].itens = []; continue; }
       var dt = Nucleo.paraData(d.data);
       var nome = n === 0 ? 'Amanhã' : Nucleo.DIAS[dt.getDay()].replace('-feira', '');
-      var html = '<div class="rotulo"><b>' + nome + '</b> · ' + Nucleo.SIGLAS_BONITAS[dt.getDay()] + ' ' + dt.getDate() + '</div>';
-      for (var i = 0; i < d.agenda.length && i < 3; i++) {
-        var e = d.agenda[i];
-        html += '<div class="linha"><span class="hh num">' + (e.dia_inteiro ? 'dia' : esc(e.inicio || '')) + '</span><i class="bg-' + e.quem + '"></i>' + esc(e.titulo) + '</div>';
-      }
-      if (d.agenda.length > 3) html += '<div class="linha" style="color:#98989f">+ ' + (d.agenda.length - 3) + ' compromissos</div>';
-      if (!d.agenda.length) html += '<div class="linha" style="color:#636366">Sem compromissos</div>';
-      if (d.tarefas.length) {
-        var nomes = [];
-        for (i = 0; i < d.tarefas.length && i < 3; i++) nomes.push(esc(d.tarefas[i].tarefa));
-        html += '<div class="linha tar">' + d.tarefas.length + ' tarefa' + (d.tarefas.length > 1 ? 's' : '') + ': ' +
-          nomes.join(', ') + (d.tarefas.length > 3 ? '…' : '') + '</div>';
-      }
-      el.innerHTML = html;
+      var partes = [];
+      if (d.agenda.length) partes.push(d.agenda.length + ' compromisso' + (d.agenda.length > 1 ? 's' : ''));
+      if (d.tarefas.length) partes.push(d.tarefas.length + ' tarefa' + (d.tarefas.length > 1 ? 's' : ''));
+      el.innerHTML = '<div class="rotulo"><span><b>' + nome + '</b> · ' + Nucleo.SIGLAS_BONITAS[dt.getDay()] + ' ' + dt.getDate() +
+        '</span><span class="resumo">' + partes.join(' · ') + '</span></div><div class="giro" id="giro-' + n + '"></div><div class="pontos" id="pontos-' + n + '"></div>';
+      giro[n].itens = itensDoDia(d);
+      if (giro[n].i >= giro[n].itens.length) giro[n].i = 0;
+      mostrarGiro(n);
+    }
+  }
+
+  /* ---------- próximos dias: um item por vez ---------- */
+
+  var GIRO_MS = 6000, giro = [{ itens: [], i: 0 }, { itens: [], i: 0 }];
+
+  function itensDoDia(d) {
+    var l = [], i;
+    for (i = 0; i < d.agenda.length; i++) {
+      var e = d.agenda[i];
+      l.push({ quem: e.quem, titulo: e.titulo,
+        quando: e.dia_inteiro ? 'Dia todo' : e.inicio ? e.inicio + (e.fim ? ' – ' + e.fim : '') : 'até ' + e.fim });
+    }
+    for (i = 0; i < d.tarefas.length; i++) {
+      var t = d.tarefas[i];
+      l.push({ quem: t.quem, titulo: t.tarefa, quando: 'Tarefa · ' + (estado.nomes[t.quem] || 'Casal') });
+    }
+    return l;
+  }
+
+  function mostrarGiro(n) {
+    var g = giro[n], caixa = $('giro-' + n), pontos = $('pontos-' + n);
+    if (!caixa) return;
+    if (!g.itens.length) {
+      caixa.innerHTML = '<div class="nada">Nada marcado</div>';
+      pontos.innerHTML = '';
+      return;
+    }
+    var it = g.itens[g.i];
+    caixa.innerHTML = '<div class="quando num"><i class="bg-' + it.quem + '"></i>' + esc(it.quando) + '</div>' +
+      '<div class="titulo">' + esc(it.titulo) + '</div>';
+    var p = '';
+    if (g.itens.length > 1 && g.itens.length <= 10) {
+      for (var i = 0; i < g.itens.length; i++) p += '<b' + (i === g.i ? ' class="at"' : '') + '></b>';
+    } else if (g.itens.length > 10) {
+      p = '<span class="num">' + (g.i + 1) + ' de ' + g.itens.length + '</span>';
+    }
+    pontos.innerHTML = p;
+  }
+
+  function girar() {
+    if (modo !== 'dia') return;
+    for (var n = 0; n < 2; n++) {
+      if (giro[n].itens.length < 2) continue;
+      (function (n) {
+        var caixa = $('giro-' + n);
+        if (!caixa) return;
+        caixa.className = 'giro some';
+        setTimeout(function () {
+          giro[n].i = (giro[n].i + 1) % giro[n].itens.length;
+          mostrarGiro(n);
+          var nova = $('giro-' + n);
+          if (nova) nova.className = 'giro';
+        }, 450);
+      })(n);
     }
   }
 
@@ -563,6 +628,7 @@
   setInterval(relogio, 1000);
   setInterval(function () { conferir(false); }, CONFERIR_MS);
   setInterval(mexerUmPouco, 120000);
+  setInterval(girar, GIRO_MS);
   setInterval(function () { if (modo !== 'noite') clima(); }, 60000);
   window.addEventListener('resize', function () { if (estado) desenhar(); });
   if (Painel.demo) Painel.aoMudarEmOutraAba(function () { conferir(true); });
