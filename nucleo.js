@@ -180,6 +180,29 @@ var Nucleo = (function () {
       exigir(QUEM.indexOf(pedido.quem) >= 0, 'Escolha para quem é a tarefa.');
       dados.tarefas.push({ id: novoId(), data: pedido.data || hoje, tarefa: limpar(pedido.tarefa), quem: pedido.quem,
         tipo: 'pontual', rotina_id: '', feita: false, feita_em: '', criada_em: agora });
+    } else if (a === 'editar') {
+      i = achar(dados.tarefas, pedido.id);
+      exigir(i >= 0, 'Tarefa não encontrada. Atualize a página.');
+      exigir(dados.tarefas[i].tipo === 'pontual', 'Tarefa de rotina se edita pela rotina.');
+      exigir(limpar(pedido.tarefa), 'Escreva a tarefa.');
+      exigir(QUEM.indexOf(pedido.quem) >= 0, 'Escolha para quem é a tarefa.');
+      dados.tarefas[i].tarefa = limpar(pedido.tarefa);
+      dados.tarefas[i].quem = pedido.quem;
+      if (pedido.data) dados.tarefas[i].data = pedido.data;
+    } else if (a === 'rotina_editar') {
+      i = achar(dados.rotina, pedido.id);
+      exigir(i >= 0, 'Rotina não encontrada. Atualize a página.');
+      exigir(limpar(pedido.tarefa), 'Escreva a tarefa.');
+      exigir(QUEM.indexOf(pedido.quem) >= 0, 'Escolha para quem é a tarefa.');
+      exigir(lerDias(pedido.dias).length, 'Escolha pelo menos um dia.');
+      var r = dados.rotina[i];
+      r.tarefa = limpar(pedido.tarefa); r.quem = pedido.quem; r.dias = pedido.dias; r.manha = !!pedido.manha;
+      // a de hoje ainda não feita acompanha a mudança; se hoje saiu dos dias, ela sai da lista
+      for (var k = dados.tarefas.length - 1; k >= 0; k--) {
+        var tr = dados.tarefas[k];
+        if (tr.rotina_id !== r.id || tr.data < hoje || tr.feita) continue;
+        if (vale(r, tr.data)) { tr.tarefa = r.tarefa; tr.quem = r.quem; } else dados.tarefas.splice(k, 1);
+      }
     } else if (a === 'apagar') {
       i = achar(dados.tarefas, pedido.id);
       exigir(i >= 0, 'Tarefa não encontrada. Atualize a página.');

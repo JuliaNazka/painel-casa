@@ -140,6 +140,7 @@
   input[type=date] { width: auto; color: var(--azul); text-align: right; }
   textarea { min-height: 110px; resize: none; }
   .destrutivo { width: 100%; height: 44px; color: var(--vermelho); background: var(--cartao); border-radius: 12px; }
+  .nota { font-size: 13px; color: var(--sec); margin: -12px 20px 22px; }
 
   /* controle segmentado */
   .seg { display: flex; background: var(--campo); border-radius: 9px; padding: 2px; margin-bottom: 22px; }
@@ -212,12 +213,14 @@
 <div id="folha-tarefa" class="folha-fundo oculto">
   <div class="folha">
     <div class="alca"></div>
-    <div class="folha-nav"><button data-fechar>Cancelar</button><h3>Nova tarefa</h3><button id="f-salvar" disabled>Adicionar</button></div>
+    <div class="folha-nav"><button data-fechar>Cancelar</button><h3 id="f-titulo">Nova tarefa</h3><button id="f-salvar" disabled>Adicionar</button></div>
     <div class="grupo-form"><div class="linha-form"><input type="text" id="f-texto" placeholder="O que precisa ser feito?" maxlength="140" autocomplete="off"></div></div>
     <div class="rotulo">Para quem</div>
     <div class="seg" id="f-quem"></div>
-    <div class="rotulo">Repetir</div>
-    <div class="seg" id="f-tipo"><button data-v="uma" class="sel">Só uma vez</button><button data-v="semana">Toda semana</button></div>
+    <div id="f-repetir">
+      <div class="rotulo">Repetir</div>
+      <div class="seg" id="f-tipo"><button data-v="uma" class="sel">Só uma vez</button><button data-v="semana">Toda semana</button></div>
+    </div>
     <div id="f-uma">
       <div class="rotulo">Quando</div>
       <div class="seg" id="f-quando"><button data-v="0" class="sel">Hoje</button><button data-v="1">Amanhã</button><button data-v="outra">Outro dia</button></div>
@@ -228,7 +231,9 @@
       <div class="dias" id="f-dias"></div>
       <div class="atalhos"><button data-atalho="todo">Todo dia</button><button data-atalho="uteis">Seg a sex</button><button data-atalho="fds">Fim de semana</button></div>
       <div class="grupo-form"><div class="linha-form"><div>Rotina da manhã<span class="sub">Aparece na tela de Bom dia da TV</span></div><button class="chave" id="f-manha" role="switch" aria-checked="false" aria-label="Rotina da manhã"></button></div></div>
+      <p class="nota oculto" id="f-aviso">A mudança vale para todos os dias desta rotina, inclusive hoje se ainda não foi feita.</p>
     </div>
+    <button class="destrutivo oculto" id="f-apagar">Apagar tarefa</button>
   </div>
 </div>
 
@@ -347,7 +352,7 @@
         if (t.tipo === 'rotina') sub.push(t.manha ? 'Rotina da manhã' : 'Rotina');
         html += '<li class="tarefa' + (t.feita ? ' feita' : '') + '"><button class="marcar" data-id="' + esc(t.id) + '" role="checkbox" aria-checked="' + !!t.feita + '">' +
           '<span class="ck"></span><span class="txt">' + esc(t.tarefa) + (sub.length ? '<span class="sub">' + sub.join(' · ') + '</span>' : '') + '</span></button>' +
-          (t.tipo === 'pontual' ? '<button class="mais-acoes" data-apagar="' + esc(t.id) + '" aria-label="Apagar tarefa">' + RETICENCIAS + '</button>' : '') + '</li>';
+          '<button class="mais-acoes" data-editar="' + esc(t.id) + '" aria-label="Editar tarefa">' + RETICENCIAS + '</button></li>';
       });
       html += '</ul></div>';
     });
@@ -380,7 +385,7 @@
       html += '<div class="linha"><span class="cor bg-' + r.quem + '"></span><div class="meio">' + esc(r.tarefa) +
         '<span class="sub">' + esc(estado.nomes[r.quem] || 'Casal') + ' · ' + esc(r.dias_texto) + (r.manha ? ' · manhã' : '') +
         (r.ativa === false ? ' · pausada' : '') + '</span></div>' +
-        '<button class="mais-acoes" data-rotina="' + esc(r.id) + '" aria-label="Apagar rotina">' + RETICENCIAS + '</button></div>';
+        '<button class="mais-acoes" data-editar-rotina="' + esc(r.id) + '" aria-label="Editar rotina">' + RETICENCIAS + '</button></div>';
     });
     $('rotina').innerHTML = html;
   }
@@ -396,12 +401,10 @@
       desenhar();
     } else if (b.dataset.id) {
       marcar(b.dataset.id);
-    } else if (b.dataset.apagar) {
-      var t = acharTarefa(b.dataset.apagar);
-      if (t && confirm('Apagar "' + t.tarefa + '"?')) enviar('apagar', { id: t.id }, 'Tarefa apagada').then(null, function () { });
-    } else if (b.dataset.rotina) {
-      var r = estado.rotina.filter(function (x) { return x.id === b.dataset.rotina; })[0];
-      if (r && confirm('Parar de repetir "' + r.tarefa + '" (' + r.dias_texto + ')?')) enviar('rotina_apagar', { id: r.id }, 'Rotina apagada').then(null, function () { });
+    } else if (b.dataset.editar) {
+      editarTarefa(b.dataset.editar);
+    } else if (b.dataset.editarRotina) {
+      editarRotina(b.dataset.editarRotina);
     } else if (b.hasAttribute('data-fechar')) {
       fecharFolhas();
     }
@@ -429,8 +432,9 @@
     f.addEventListener('click', function (ev) { if (ev.target === f) fecharFolhas(); });
   });
 
-  /* nova tarefa */
-  var form = { quem: 'casal', tipo: 'uma', quando: '0', dias: {}, manha: false };
+  /* nova tarefa e edição (a mesma folha) */
+  var form = { modo: 'nova', quem: 'casal', tipo: 'uma', quando: '0', dias: {}, manha: false };
+  function acharRotina(id) { return estado.rotina.filter(function (r) { return r.id === id; })[0]; }
 
   function marcarSeg(grupo, valor) {
     grupo.querySelectorAll('button').forEach(function (c) { c.classList.toggle('sel', c.dataset.v === valor); });
@@ -438,20 +442,51 @@
 
   $('nova').addEventListener('click', function () {
     if (!estado) return;
-    form = { quem: eu || 'casal', tipo: 'uma', quando: '0', dias: {}, manha: false };
-    $('f-texto').value = '';
+    abrirForm({ modo: 'nova', quem: eu || 'casal', tipo: 'uma', quando: '0', dias: {}, manha: false }, '');
+  });
+
+  function editarTarefa(id) {
+    var t = acharTarefa(id);
+    if (!t) return;
+    if (t.tipo === 'rotina') {
+      if (acharRotina(t.rotina_id)) editarRotina(t.rotina_id); else toast('Essa rotina não existe mais');
+      return;
+    }
+    var amanha = Nucleo.somarDias(estado.hoje, 1);
+    abrirForm({ modo: 'editar', alvo: 'pontual', id: t.id, quem: t.quem, tipo: 'uma', dias: {}, manha: false, data: t.data,
+      quando: t.data === estado.hoje ? '0' : t.data === amanha ? '1' : 'outra' }, t.tarefa);
+  }
+
+  function editarRotina(id) {
+    var r = acharRotina(id);
+    if (!r) return;
+    var dias = {};
+    Nucleo.lerDias(r.dias).forEach(function (d) { dias[d] = true; });
+    abrirForm({ modo: 'editar', alvo: 'rotina', id: r.id, quem: r.quem, tipo: 'semana', quando: '0', dias: dias, manha: !!r.manha }, r.tarefa);
+  }
+
+  function abrirForm(f, texto) {
+    form = f;
+    var editando = f.modo === 'editar';
+    $('f-titulo').textContent = !editando ? 'Nova tarefa' : f.alvo === 'rotina' ? 'Editar rotina' : 'Editar tarefa';
+    $('f-salvar').textContent = editando ? 'Salvar' : 'Adicionar';
+    mostrar($('f-repetir'), !editando);
+    mostrar($('f-aviso'), editando && f.alvo === 'rotina');
+    mostrar($('f-apagar'), editando);
+    $('f-apagar').textContent = f.alvo === 'rotina' ? 'Apagar rotina' : 'Apagar tarefa';
+    $('f-texto').value = texto;
     $('f-quem').innerHTML = ['p1', 'p2', 'casal'].map(function (q) {
       return '<button data-v="' + q + '"><i class="bg-' + q + '"></i>' + esc(estado.nomes[q]) + '</button>';
     }).join('');
     $('f-dias').innerHTML = [1, 2, 3, 4, 5, 6, 0].map(function (d) {
       return '<button data-v="' + d + '" aria-label="' + Nucleo.DIAS[d] + '">' + Nucleo.SIGLAS_BONITAS[d] + '</button>';
     }).join('');
-    $('f-data').value = Nucleo.somarDias(estado.hoje, 2);
-    marcarSeg($('f-quem'), form.quem); marcarSeg($('f-tipo'), 'uma'); marcarSeg($('f-quando'), '0');
+    $('f-data').value = f.data || Nucleo.somarDias(estado.hoje, 2);
+    marcarSeg($('f-quem'), form.quem); marcarSeg($('f-tipo'), form.tipo); marcarSeg($('f-quando'), form.quando);
     atualizarForm();
     abrir('folha-tarefa');
-    setTimeout(function () { $('f-texto').focus(); }, 80);
-  });
+    if (!editando) setTimeout(function () { $('f-texto').focus(); }, 80);
+  }
 
   function atualizarForm() {
     mostrar($('f-uma'), form.tipo === 'uma');
@@ -485,18 +520,37 @@
   $('f-salvar').addEventListener('click', function () {
     var texto = $('f-texto').value.trim(), botao = this, p;
     if (!texto) return;
+    var editando = form.modo === 'editar';
     if (form.tipo === 'uma') {
       var data = form.quando === 'outra' ? $('f-data').value : Nucleo.somarDias(estado.hoje, +form.quando);
       if (!data) { toast('Escolha a data'); return; }
-      p = enviar('nova', { tarefa: texto, quem: form.quem, data: data },
-        data === estado.hoje ? 'Tarefa criada' : 'Tarefa para ' + Nucleo.dataPorExtenso(data).split(', ')[1]);
+      p = editando ? enviar('editar', { id: form.id, tarefa: texto, quem: form.quem, data: data }, 'Tarefa salva') :
+        enviar('nova', { tarefa: texto, quem: form.quem, data: data },
+          data === estado.hoje ? 'Tarefa criada' : 'Tarefa para ' + Nucleo.dataPorExtenso(data).split(', ')[1]);
     } else {
       var dias = [0, 1, 2, 3, 4, 5, 6].filter(function (d) { return form.dias[d]; })
         .map(function (d) { return Nucleo.SIGLAS[d]; }).join(', ');
-      p = enviar('rotina_nova', { tarefa: texto, quem: form.quem, dias: dias, manha: form.manha }, 'Rotina criada');
+      var pedido = { tarefa: texto, quem: form.quem, dias: dias, manha: form.manha };
+      if (editando) { pedido.id = form.id; p = enviar('rotina_editar', pedido, 'Rotina salva'); }
+      else p = enviar('rotina_nova', pedido, 'Rotina criada');
     }
     botao.disabled = true;
     p.then(function () { fecharFolhas(); }, function () { botao.disabled = false; });
+  });
+
+  $('f-apagar').addEventListener('click', function () {
+    var b = this, p;
+    if (form.alvo === 'rotina') {
+      var r = acharRotina(form.id);
+      if (!r || !confirm('Parar de repetir "' + r.tarefa + '" (' + r.dias_texto + ')?')) return;
+      p = enviar('rotina_apagar', { id: r.id }, 'Rotina apagada');
+    } else {
+      var t = acharTarefa(form.id);
+      if (!t || !confirm('Apagar "' + t.tarefa + '"?')) return;
+      p = enviar('apagar', { id: t.id }, 'Tarefa apagada');
+    }
+    b.disabled = true;
+    p.then(function () { b.disabled = false; fecharFolhas(); }, function () { b.disabled = false; });
   });
 
   /* recado */
