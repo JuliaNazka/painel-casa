@@ -13,17 +13,35 @@
    * hierarquia por tamanho e peso, uma cor por pessoa. Sem vidro: aqui tudo é conteúdo.
    * Tudo em rem baseado na largura da tela: fica igual em TV 720p, 1080p ou 4K.
    * CSS sem variáveis e com prefixos -webkit- de propósito (navegador da TV LG).
+   * Clicável com o ponteiro do controle Magic Remote.
    */
   html { font-size: 1.04vw; }
-  html, body { margin: 0; height: 100%; overflow: hidden; background: #000; color: #f5f5f7; cursor: none; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #000; color: #f5f5f7; }
   body { font-family: -apple-system, "SF Pro Display", Inter, "Segoe UI", Roboto, Arial, sans-serif; font-weight: 500;
-    -webkit-font-smoothing: antialiased; letter-spacing: -.01em; }
+    -webkit-font-smoothing: antialiased; letter-spacing: -.01em; -webkit-user-select: none; user-select: none; }
   * { box-sizing: border-box; }
   ul { list-style: none; margin: 0; padding: 0; }
+  button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; letter-spacing: inherit; }
   .num { font-variant-numeric: tabular-nums; }
+  .clicavel { cursor: pointer; border-radius: .8rem; -webkit-transition: background .15s; transition: background .15s; }
+  .clicavel:hover { background: #2c2c2e; }
 
-  #tela { height: 100%; padding: 2.6vh 2.6vw 2.4vh; display: flex; flex-direction: column;
-    -webkit-transition: -webkit-transform 2s; transition: transform 2s; }
+  #app { height: 100%; display: flex; -webkit-transition: -webkit-transform 2s; transition: transform 2s; }
+
+  /* ---------- menu lateral ---------- */
+  #menu { flex: none; width: 6.6rem; padding: 2.6vh 0 2.4vh; display: flex; flex-direction: column; align-items: center; }
+  #menu .marca { width: 3rem; height: 3rem; margin-bottom: 2.4vh; }
+  #menu button { width: 5.4rem; padding: .9rem 0 .7rem; margin-bottom: .5rem; border-radius: 1.1rem; color: #8e8e93;
+    display: flex; flex-direction: column; align-items: center; font-size: .9rem; font-weight: 600; }
+  #menu button svg { width: 2rem; height: 2rem; margin-bottom: .35rem; }
+  #menu button:hover { background: #1c1c1e; color: #f5f5f7; }
+  #menu button.ativo { background: #2c2c2e; color: #fff; }
+  #menu .saldo { margin-top: auto; text-align: center; font-size: .9rem; color: #8e8e93; font-weight: 600; line-height: 1.4; }
+  #menu .saldo b { display: block; font-size: 1.3rem; color: #ffd60a; }
+
+  #tela { flex: 1; min-width: 0; height: 100%; padding: 2.6vh 2.4vw 2.4vh .4vw; display: flex; flex-direction: column; }
+  .pagina { flex: 1; min-height: 0; display: none; flex-direction: column; margin-top: 2vh; }
+  .pagina.ativa { display: flex; }
 
   /* ---------- topo ---------- */
   #topo { display: flex; align-items: flex-end; justify-content: space-between; height: 11vh; flex: none; }
@@ -37,26 +55,26 @@
   #hora { font-size: 4.6rem; font-weight: 700; letter-spacing: -.04em; line-height: .95; }
 
   /* ---------- cartões ---------- */
-  #meio { flex: 1; display: flex; min-height: 0; margin-top: 2vh; }
-  #tarefas { flex: 1.6; display: flex; flex-direction: column; min-height: 0; margin-right: 1rem; }
-  #colunas { flex: 1; display: flex; min-height: 0; }
-  #colunas .cartao { flex: 1; }
-  #colunas .cartao + .cartao { margin-left: 1rem; }
-  #b-casal { height: 29%; margin-top: 1rem; flex: none; }
-  #b-casal ul { display: flex; flex-wrap: wrap; align-content: flex-start; }
-  #b-casal li.tarefa { width: 50%; padding-right: 1rem; }
-
   .cartao { background: #1c1c1e; border-radius: 1.5rem; padding: 1.2rem 1.4rem 1rem; display: flex;
     flex-direction: column; min-height: 0; position: relative; overflow: hidden; }
   .cab { display: flex; align-items: baseline; justify-content: space-between; flex: none; }
   .cab h2 { margin: 0; font-size: 1.75rem; font-weight: 700; letter-spacing: -.02em; }
   .cab .conta { font-size: 1.25rem; color: #98989f; font-weight: 600; }
   .barra { height: .32rem; background: #2c2c2e; border-radius: 1rem; margin: .75rem 0 .5rem; flex: none; overflow: hidden; }
-  .barra b { display: block; height: 100%; border-radius: 1rem; width: 0;
-    -webkit-transition: width .8s ease; transition: width .8s ease; }
+  .barra b { display: block; height: 100%; border-radius: 1rem; width: 0; -webkit-transition: width .8s ease; transition: width .8s ease; }
   .cartao ul { flex: 1; min-height: 0; overflow: hidden; }
+  .rotulo { font-size: 1rem; color: #98989f; text-transform: uppercase; letter-spacing: .06em; font-weight: 700; }
 
-  .tarefa { display: flex; align-items: flex-start; font-size: 1.45rem; line-height: 1.3; padding: .42rem 0; }
+  #meio { flex: 1; display: flex; min-height: 0; }
+  #tarefas { flex: 1.6; display: flex; flex-direction: column; min-height: 0; margin-right: 1rem; }
+  #colunas { flex: 1; display: flex; min-height: 0; }
+  #colunas .cartao { flex: 1; }
+  #colunas .cartao + .cartao { margin-left: 1rem; }
+  #b-casal { height: 36%; margin-top: 1rem; flex: none; padding-bottom: .8rem; }
+  #b-casal .barra { margin-bottom: .1rem; }
+  #b-casal .giro .titulo { font-size: 2.05rem; }
+
+  .tarefa { display: flex; align-items: flex-start; font-size: 1.45rem; line-height: 1.3; padding: .42rem .5rem; margin: 0 -.5rem; }
   .ck { flex: none; width: 1.5rem; height: 1.5rem; border-radius: 50%; border: .13rem solid #48484a;
     margin: .06rem .85rem 0 0; position: relative; }
   .feita .ck { border-color: transparent; }
@@ -83,12 +101,12 @@
   .festa { -webkit-animation: brilho 1.2s ease-in-out 2; animation: brilho 1.2s ease-in-out 2; }
   @-webkit-keyframes brilho { 50% { box-shadow: inset 0 0 0 .2rem rgba(48, 209, 88, .7); } }
   @keyframes brilho { 50% { box-shadow: inset 0 0 0 .2rem rgba(48, 209, 88, .7); } }
-  .confete { position: absolute; top: -1rem; width: .5rem; height: .9rem; border-radius: .2rem;
+  .confete { position: absolute; top: -1rem; width: .5rem; height: .9rem; border-radius: .2rem; z-index: 2;
     -webkit-animation: cair 2.4s ease-in forwards; animation: cair 2.4s ease-in forwards; }
   @-webkit-keyframes cair { to { -webkit-transform: translateY(40rem) rotate(540deg); opacity: 0; } }
   @keyframes cair { to { transform: translateY(40rem) rotate(540deg); opacity: 0; } }
 
-  /* ---------- agenda ---------- */
+  /* agenda */
   #agenda { flex: 1; }
   #agenda .cab { margin-bottom: .7rem; }
   .legenda { font-size: 1.05rem; font-weight: 600; }
@@ -99,23 +117,28 @@
   .ev .cor { flex: none; width: .3rem; border-radius: 1rem; margin-right: .95rem; }
   .ev .t { font-size: 1.45rem; line-height: 1.3; font-weight: 600; }
   .ev .l { font-size: 1.1rem; color: #98989f; margin-top: .1rem; }
-  .ev.passou { opacity: .38; }
 
-  /* ---------- rodapé ---------- */
+  /* rodapé de hoje */
   #rodape { height: 19vh; flex: none; display: flex; margin-top: 1rem; }
-  #recado { flex: 1.25; margin-right: 1rem; justify-content: center; }
-  .rotulo { font-size: 1rem; color: #98989f; text-transform: uppercase; letter-spacing: .06em; font-weight: 700; }
-  #recado .texto { font-size: 1.7rem; font-weight: 600; line-height: 1.3; margin-top: .4rem; overflow: hidden;
+  #rodape .cartao + .cartao { margin-left: 1rem; }
+  #recado { flex: 1.15; justify-content: center; }
+  #recado .texto { font-size: 1.55rem; font-weight: 600; line-height: 1.3; margin-top: .4rem; overflow: hidden;
     display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; letter-spacing: -.015em; }
-  #recado .texto.medio { font-size: 1.42rem; }
-  #recado .texto.longo { font-size: 1.2rem; }
+  #recado .texto.medio { font-size: 1.32rem; }
+  #recado .texto.longo { font-size: 1.12rem; }
   #recado .autor { font-size: 1.05rem; color: #98989f; margin-top: .4rem; }
+  #refeicao { flex: 1.1; }
+  #refeicao .pessoa { display: flex; align-items: baseline; margin-top: .55rem; }
+  #refeicao .pessoa i { flex: none; width: .65rem; height: .65rem; border-radius: 50%; margin-right: .6rem; }
+  #refeicao .quando { flex: none; font-size: 1.05rem; color: #98989f; font-weight: 600; width: 6.4rem; }
+  #refeicao .prato { font-size: 1.3rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .prox { flex: 1; }
-  .prox + .prox { margin-left: 1rem; }
-  /* próximos dias: um item por vez, grande, trocando sozinho */
-  .prox .rotulo { display: flex; justify-content: space-between; align-items: baseline; flex: none; }
+  .prox .rotulo, #refeicao .rotulo { display: flex; justify-content: space-between; align-items: baseline; flex: none; }
   .prox .rotulo b { color: #f5f5f7; }
-  .prox .resumo { text-transform: none; letter-spacing: 0; font-size: .95rem; font-weight: 600; }
+  .prox .giro .titulo { font-size: 1.5rem; }
+  .prox .giro .quando { font-size: 1.1rem; }
+
+  /* itens girando (próximos dias e casal) */
   .giro { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: center;
     -webkit-transition: opacity .45s ease; transition: opacity .45s ease; }
   .giro.some { opacity: 0; }
@@ -124,23 +147,128 @@
   .giro .titulo { flex: none; font-size: 1.85rem; font-weight: 700; line-height: 1.2; letter-spacing: -.02em; margin-top: .3rem;
     overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
   .giro .nada { font-size: 1.4rem; color: #636366; font-weight: 600; }
+  #giro-casal { margin: 0 -.6rem; padding: 0 .6rem; }
+  #giro-casal .dica { font-size: .95rem; color: #636366; font-weight: 600; margin-left: .6rem; }
   .pontos { flex: none; display: flex; align-items: center; height: .9rem; }
   .pontos b { width: .42rem; height: .42rem; border-radius: 50%; background: #3a3a3c; margin-right: .38rem; }
   .pontos b.at { background: #aeaeb2; }
   .pontos span { font-size: .9rem; color: #98989f; font-weight: 600; }
 
+  /* ---------- treino & dieta ---------- */
+  .faixa { flex: none; display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+  .faixa h1 { margin: 0; font-size: 2.2rem; font-weight: 700; letter-spacing: -.025em; }
+  .faixa .sub { font-size: 1.2rem; color: #98989f; font-weight: 600; }
+  .horizonte { flex: 1; height: .32rem; background: #2c2c2e; border-radius: 1rem; margin: 0 2rem; position: relative; }
+  .horizonte b { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 1rem; background: #40c8e0; }
+  .horizonte i { position: absolute; top: -.55rem; width: 1.4rem; height: 1.4rem; margin-left: -.7rem; border-radius: 50%; background: #ffd60a;
+    box-shadow: 0 0 0 .3rem rgba(255, 214, 10, .25); }
+  .linhas-pessoa { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+  .pessoa-treino { flex: 1; min-height: 0; display: flex; }
+  .pessoa-treino + .pessoa-treino { margin-top: 1rem; }
+  .pessoa-treino .resumo-t { flex: none; width: 24%; margin-right: 1rem; }
+  .pessoa-treino .exercicios { flex: 1.25; margin-right: 1rem; }
+  .pessoa-treino .refeicoes { flex: 1; }
+  .resumo-t h2 { margin: 0; font-size: 1.9rem; font-weight: 800; letter-spacing: -.02em; }
+  .resumo-t .fase { font-size: 1.05rem; color: #98989f; font-weight: 600; margin-top: .2rem; }
+  .resumo-t .titulo-t { font-size: 1.45rem; font-weight: 700; line-height: 1.25; margin-top: .9rem; }
+  .resumo-t .meta { font-size: 1.05rem; color: #98989f; margin-top: .3rem; line-height: 1.35; }
+  .botao-treino { margin-top: auto; width: 100%; padding: 1rem; border-radius: 1rem; background: #2c2c2e; font-size: 1.25rem; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; -webkit-transition: background .2s; transition: background .2s; }
+  .botao-treino:hover { background: #3a3a3c; }
+  .botao-treino.feito { background: #1f4d2c; color: #30d158; }
+  .botao-treino .estrela { color: #ffd60a; margin-left: .5rem; }
+  .exercicios ul { -webkit-column-count: 2; column-count: 2; -webkit-column-gap: 1.6rem; column-gap: 1.6rem; }
+  .exercicios li { -webkit-column-break-inside: avoid; break-inside: avoid; font-size: 1.12rem; line-height: 1.3; padding: .22rem 0;
+    display: flex; justify-content: space-between; }
+  .exercicios li span { color: #98989f; font-weight: 600; white-space: nowrap; margin-left: .7rem; }
+  .exercicios li.bloco { color: #40c8e0; font-weight: 700; font-size: .95rem; text-transform: uppercase; letter-spacing: .05em; padding-top: .55rem; }
+  .p1 .exercicios li.bloco { color: #ff9f0a; }
+  .exercicios .corrida { flex: none; margin-top: .6rem; font-size: 1.1rem; color: #d1d1d6; background: #2c2c2e; border-radius: .8rem; padding: .6rem .8rem; }
+  .ref { display: flex; padding: .45rem 0; border-top: .06rem solid #2c2c2e; }
+  .ref:first-child { border-top: 0; }
+  .ref .h { flex: none; width: 4.6rem; font-size: 1.05rem; color: #98989f; font-weight: 600; line-height: 1.4; }
+  .ref .n { flex: 1; min-width: 0; font-size: 1.25rem; font-weight: 600; line-height: 1.3; }
+  .ref .n small { display: block; font-size: .95rem; color: #98989f; font-weight: 500; }
+  .ref .k { flex: none; font-size: .95rem; color: #636366; margin-left: .6rem; font-weight: 600; }
+  .ref.agora { background: #2c2c2e; border-radius: .8rem; padding: .45rem .6rem; margin: 0 -.6rem; border-top-color: transparent; }
+  .ref.agora + .ref { border-top-color: transparent; }
+  .ref.passou { opacity: .45; }
+
+  /* ---------- cardápio ---------- */
+  .seg { display: flex; background: #1c1c1e; border-radius: 1rem; padding: .25rem; }
+  .seg button { padding: .55rem 1.5rem; border-radius: .8rem; font-size: 1.15rem; font-weight: 600; color: #98989f; }
+  .seg button.sel { background: #3a3a3c; color: #fff; }
+  .grade { flex: 1; min-height: 0; display: flex; flex-direction: column; background: #1c1c1e; border-radius: 1.5rem; padding: .6rem 1rem; }
+  .grade .linha { flex: 1; min-height: 0; display: flex; border-top: .06rem solid #2c2c2e; }
+  .grade .linha:first-child { flex: none; border-top: 0; }
+  .grade .linha.hoje { background: #2c2c2e; border-radius: 1rem; border-top-color: transparent; }
+  .grade .linha.hoje + .linha { border-top-color: transparent; }
+  .grade .dia { flex: none; width: 6rem; display: flex; flex-direction: column; justify-content: center; padding-left: .6rem; }
+  .grade .dia b { font-size: 1.35rem; }
+  .grade .dia small { font-size: .95rem; color: #98989f; font-weight: 600; }
+  .grade .cel { flex: 1; min-width: 0; padding: .5rem .8rem; display: flex; flex-direction: column; justify-content: center; }
+  .grade .cel .n { font-size: 1.15rem; font-weight: 600; line-height: 1.25; overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+  .grade .cel small { font-size: .9rem; color: #98989f; font-weight: 600; }
+  .grade .titulo-col { font-size: .95rem; color: #98989f; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; padding: .6rem .8rem; }
+
+  /* ---------- listas ---------- */
+  .listas { flex: 1; min-height: 0; display: flex; }
+  .listas .cartao { flex: 1; }
+  .listas .cartao + .cartao { margin-left: 1rem; }
+  .listas .cab { margin-bottom: .6rem; }
+  .item { display: flex; align-items: flex-start; font-size: 1.4rem; line-height: 1.3; padding: .45rem .5rem; margin: 0 -.5rem; }
+  .item .ck { border-color: #48484a; }
+  .item.feita .ck { background: #0a84ff; }
+  .rodape-lista { flex: none; font-size: 1rem; color: #636366; font-weight: 600; margin-top: .5rem; }
+
+  /* ---------- estrelas ---------- */
+  .saldos { flex: none; display: flex; }
+  .saldos .cartao { flex: 1; }
+  .saldos .cartao + .cartao { margin-left: 1rem; }
+  .saldos .valor { font-size: 3.6rem; font-weight: 800; letter-spacing: -.04em; line-height: 1.05; margin-top: .3rem; }
+  .saldos .valor small { font-size: 1.3rem; color: #98989f; font-weight: 600; letter-spacing: 0; margin-left: .5rem; }
+  .saldos .proxima { font-size: 1.1rem; color: #d1d1d6; margin-top: .4rem; }
+  .estrela-ic { color: #ffd60a; }
+  .recompensas { flex: 1; min-height: 0; display: flex; margin-top: 1rem; }
+  .recompensas .cartao { flex: 1; }
+  .recompensas .cartao + .cartao { margin-left: 1rem; }
+  .rec { padding: .6rem 0; border-top: .06rem solid #2c2c2e; }
+  .rec:first-child { border-top: 0; }
+  .rec .topo-r { display: flex; justify-content: space-between; align-items: baseline; font-size: 1.25rem; font-weight: 600; }
+  .rec .topo-r .custo { flex: none; font-size: 1.05rem; color: #ffd60a; white-space: nowrap; margin-left: .6rem; }
+  .rec .barra { margin: .45rem 0 0; }
+  .rec .barra b { background: #ffd60a; }
+  .rec .pronta { font-size: .9rem; font-weight: 700; color: #30d158; margin-top: .3rem; }
+  .hist li { display: flex; justify-content: space-between; font-size: 1.1rem; padding: .35rem 0; }
+  .hist li span { color: #98989f; }
+  .hist li b.menos { color: #ff6961; }
+  .hist li b.mais { color: #ffd60a; }
+
+  /* ---------- avisos ---------- */
   #status { position: fixed; right: 1.4vw; bottom: .6vh; font-size: .8rem; color: #3a3a3c; z-index: 6; }
   #status.erro { color: #ff6961; font-size: 1rem; }
   #demo { position: fixed; top: .7vh; left: 50%; -webkit-transform: translateX(-50%); transform: translateX(-50%);
     font-size: .8rem; letter-spacing: .12em; color: #ffd60a; font-weight: 700; display: none; z-index: 5; }
+  #ganho { position: fixed; top: 3vh; left: 50%; -webkit-transform: translate(-50%, -150%); transform: translate(-50%, -150%); z-index: 8;
+    background: #2c2c2e; border-radius: 2rem; padding: .7rem 1.4rem; font-size: 1.3rem; font-weight: 700;
+    -webkit-transition: -webkit-transform .35s ease; transition: transform .35s ease; }
+  #ganho.mostra { -webkit-transform: translate(-50%, 0); transform: translate(-50%, 0); }
+
+  #comemora { position: fixed; left: 0; top: 0; right: 0; bottom: 0; z-index: 9; background: rgba(0, 0, 0, .72); display: none;
+    align-items: center; justify-content: center; overflow: hidden; }
+  #comemora.ativo { display: flex; }
+  #comemora .caixa { background: #f5f5f7; color: #1c1c1e; border-radius: 2rem; padding: 2.4rem 3.4rem 2rem; text-align: center; width: 32rem; position: relative; }
+  #comemora svg { width: 8rem; height: 8rem; margin-top: -6rem; }
+  #comemora h2 { margin: .6rem 0 .3rem; font-size: 3rem; font-weight: 800; letter-spacing: -.03em; }
+  #comemora p { margin: 0; font-size: 1.45rem; line-height: 1.35; color: #3a3a3c; }
+  #comemora button { margin-top: 1.6rem; background: #1c1c1e; color: #fff; border-radius: 1rem; padding: .9rem 2.6rem; font-size: 1.3rem; font-weight: 700; }
 
   /* ---------- noite ---------- */
-  #noite { position: fixed; left: 0; top: 0; right: 0; bottom: 0; background: #000; display: none; z-index: 4; }
-  #noite div { position: absolute; font-size: 3rem; color: #2c2c2e; font-weight: 700;
-    -webkit-transition: all 3s; transition: all 3s; }
+  #noite { position: fixed; left: 0; top: 0; right: 0; bottom: 0; background: #000; display: none; z-index: 7; cursor: pointer; }
+  #noite div { position: absolute; font-size: 3rem; color: #2c2c2e; font-weight: 700; -webkit-transition: all 3s; transition: all 3s; }
 
   /* ---------- bom dia ---------- */
-  #bomdia { position: fixed; left: 0; top: 0; right: 0; bottom: 0; display: none; z-index: 3;
+  #bomdia { position: fixed; left: 0; top: 0; right: 0; bottom: 0; display: none; z-index: 4;
     background: #0b1430; background: linear-gradient(180deg, #0a1330 0%, #1b2550 42%, #4b3a5c 72%, #9a6248 100%);
     padding: 4.5vh 3.4vw 3.6vh; flex-direction: column; }
   #bomdia.ativo { display: flex; }
@@ -165,56 +293,83 @@
   .bd-cols { flex: 1; min-height: 0; display: flex; }
   .bd-col { flex: 1; background: rgba(28, 28, 30, .78); border-radius: 1.5rem; padding: 1.2rem 1.4rem; overflow: hidden; }
   .bd-col + .bd-col { margin-left: 1rem; }
-  .bd-col .tarefa { font-size: 1.7rem; padding: .5rem 0; }
+  .bd-col .tarefa { font-size: 1.7rem; padding: .5rem; }
   .bd-col .ck { width: 1.75rem; height: 1.75rem; }
   .bd-col .feita .ck:after { left: .55rem; top: .26rem; width: .4rem; height: .8rem; }
+  .bd-col .clicavel:hover { background: rgba(255, 255, 255, .08); }
   .bd-vazio { font-size: 1.5rem; color: #d1d1d6; background: rgba(28, 28, 30, .6); border-radius: 1.5rem; padding: 1.4rem 1.6rem; }
 
   @media (prefers-reduced-motion: reduce) {
-    .giro { -webkit-transition: none; transition: none; }
+    .giro, #ganho { -webkit-transition: none; transition: none; }
     .festa, .confete { -webkit-animation: none; animation: none; display: none; }
-    #tela, .barra b { -webkit-transition: none; transition: none; }
+    #app, .barra b { -webkit-transition: none; transition: none; }
   }
 </style>
 </head>
 <body>
-<div id="tela">
-  <div id="topo">
-    <div><div class="sobre" id="semana">&nbsp;</div><div id="dia">&nbsp;</div></div>
-    <div id="direita"><div id="clima"></div><div id="hora" class="num">--:--</div></div>
-  </div>
-  <div id="meio">
-    <div id="tarefas">
-      <div id="colunas">
-        <div class="cartao p1" id="b-p1"></div>
-        <div class="cartao p2" id="b-p2"></div>
-      </div>
-      <div class="cartao casal" id="b-casal"></div>
+<div id="app">
+  <nav id="menu">
+    <svg class="marca" viewBox="0 0 64 64"><path d="M32 8 56 28h-6v26H14V28H8z" fill="#ffd60a"/><path d="m23 37 7 7 12-13" fill="none" stroke="#000" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <button data-tela="hoje" class="ativo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>Hoje</button>
+    <button data-tela="treino"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6.5 6.5v11M17.5 6.5v11M3.5 9v6M20.5 9v6M6.5 12h11"/></svg>Treino</button>
+    <button data-tela="cardapio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v8M4.5 3v5a2.5 2.5 0 0 0 5 0V3M7 11v10M17 21V3c-2.2 1.2-3.5 3.7-3.5 7v3H17"/></svg>Cardápio</button>
+    <button data-tela="listas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m4 6 1.5 1.5L8 5M4 12l1.5 1.5L8 11M4 18l1.5 1.5L8 17M11 6h9M11 12h9M11 18h9"/></svg>Listas</button>
+    <button data-tela="estrelas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/></svg>Estrelas</button>
+    <div class="saldo" id="menu-saldo"></div>
+  </nav>
+
+  <div id="tela">
+    <div id="topo">
+      <div><div class="sobre" id="semana">&nbsp;</div><div id="dia">&nbsp;</div></div>
+      <div id="direita"><div id="clima"></div><div id="hora" class="num">--:--</div></div>
     </div>
-    <div class="cartao" id="agenda"></div>
-  </div>
-  <div id="rodape">
-    <div class="cartao" id="recado"></div>
-    <div class="cartao prox" id="prox-1"></div>
-    <div class="cartao prox" id="prox-2"></div>
+
+    <div class="pagina ativa" id="pg-hoje">
+      <div id="meio">
+        <div id="tarefas">
+          <div id="colunas">
+            <div class="cartao p1" id="b-p1"></div>
+            <div class="cartao p2" id="b-p2"></div>
+          </div>
+          <div class="cartao casal" id="b-casal"></div>
+        </div>
+        <div class="cartao" id="agenda"></div>
+      </div>
+      <div id="rodape">
+        <div class="cartao" id="recado"></div>
+        <div class="cartao" id="refeicao"></div>
+        <div class="cartao prox" id="prox-1"></div>
+        <div class="cartao prox" id="prox-2"></div>
+      </div>
+    </div>
+
+    <div class="pagina" id="pg-treino"></div>
+    <div class="pagina" id="pg-cardapio"></div>
+    <div class="pagina" id="pg-listas"></div>
+    <div class="pagina" id="pg-estrelas"></div>
   </div>
 </div>
+
 <div id="bomdia"></div>
 <div id="noite"><div class="num"></div></div>
+<div id="comemora"></div>
+<div id="ganho"></div>
 <div id="demo">MODO DEMONSTRAÇÃO</div>
 <div id="status"></div>
 
-<script src="config.js"></script>
-<script src="nucleo.js"></script>
-<script src="painel.js"></script>
+<script src="config.js?v=7"></script>
+<script src="nucleo.js?v=7"></script>
+<script src="painel.js?v=7"></script>
 <script>
 (function () {
   var esc = Painel.esc, pad = Nucleo.pad;
   var CONFERIR_MS = 10000, COMPLETO_MS = 5 * 60000, CLIMA_MS = 30 * 60000, RECARREGAR_MS = 6 * 3600000;
-  var inicio = Date.now();
-  var estado = Painel.lerCache(), versao = null, ultimoCompleto = 0, ocupado = false;
-  var completoAntes = null, ultimoMinuto = '', modo = '', climaDados = null;
+  var OCIOSO_MS = 2 * 60000, ACORDADO_MS = 5 * 60000;
+  var inicio = Date.now(), ultimoToque = Date.now(), acordadoAte = 0;
+  var estado = Painel.lerCache(), versao = null, ultimoCompleto = 0, ocupado = false, enviando = 0;
+  var completoAntes = null, ultimoMinuto = '', modo = '', tela = 'hoje', climaDados = null, pessoaCardapio = 'p1';
   var forcado = (location.search.match(/[?&]tela=(\w+)/) || [])[1];  // ?tela=bomdia para testar
+  var NOMES_TELA = ['hoje', 'treino', 'cardapio', 'listas', 'estrelas'];
 
   function $(id) { return document.getElementById(id); }
   function hojeLocal() { return Nucleo.paraTexto(new Date()); }
@@ -224,12 +379,13 @@
     var m = minutosAgora();
     return f.de > f.ate ? (m >= f.de || m < f.ate) : (m >= f.de && m < f.ate);
   }
+  function estrelas(n) { return n + ' ★'; }
 
   /* ---------- relógio e modos (noite → bom dia → dia) ---------- */
 
   function modoAtual() {
-    if (forcado) return forcado;
-    if (!estado) return 'dia';
+    if (forcado && NOMES_TELA.indexOf(forcado) < 0) return forcado;
+    if (!estado || Date.now() < acordadoAte) return 'dia';
     if (dentro(estado.noite)) return 'noite';
     if (dentro(estado.bom_dia)) return 'bomdia';
     return 'dia';
@@ -244,7 +400,11 @@
     $('semana').innerHTML = ext[0];
     $('dia').innerHTML = ext[1];
     trocarModo();
-    if (estado) { desenharAgenda(); if (modo === 'bomdia') desenharBomDia(); }
+    if (estado) {
+      desenharAgenda(); desenharRefeicao();
+      if (tela === 'treino') desenharTreino();
+      if (modo === 'bomdia') desenharBomDia();
+    }
   }
 
   function trocarModo() {
@@ -266,14 +426,41 @@
   function mexerUmPouco() {
     var dx = Math.round(Math.random() * 6 - 3), dy = Math.round(Math.random() * 6 - 3);
     var t = 'translate(' + dx + 'px,' + dy + 'px)';
-    $('tela').style.webkitTransform = t; $('tela').style.transform = t;
+    $('app').style.webkitTransform = t; $('app').style.transform = t;
+  }
+
+  /* ---------- telas (menu lateral) ---------- */
+
+  function irPara(nome) {
+    if (NOMES_TELA.indexOf(nome) < 0) return;
+    tela = nome;
+    var botoes = $('menu').getElementsByTagName('button');
+    for (var i = 0; i < botoes.length; i++) botoes[i].className = botoes[i].getAttribute('data-tela') === nome ? 'ativo' : '';
+    for (i = 0; i < NOMES_TELA.length; i++) $('pg-' + NOMES_TELA[i]).className = 'pagina' + (NOMES_TELA[i] === nome ? ' ativa' : '');
+    if (estado) desenharTela();
+  }
+
+  function desenharTela() {
+    if (tela === 'hoje') desenharHoje();
+    else if (tela === 'treino') desenharTreino();
+    else if (tela === 'cardapio') desenharCardapio();
+    else if (tela === 'listas') desenharListas();
+    else if (tela === 'estrelas') desenharEstrelas();
+  }
+
+  function tocou() {
+    ultimoToque = Date.now();
+    if (modo === 'noite') { acordadoAte = Date.now() + ACORDADO_MS; trocarModo(); }
+  }
+  function conferirOcioso() {
+    if (tela !== 'hoje' && Date.now() - ultimoToque > OCIOSO_MS) irPara('hoje');
   }
 
   /* ---------- dados ---------- */
 
   function conferir(forcar) {
-    if (ocupado || (modo === 'noite' && !forcar)) return;
-    if (Date.now() - inicio > RECARREGAR_MS && navigator.onLine !== false) { location.reload(); return; }
+    if (ocupado || enviando || (modo === 'noite' && !forcar)) return;
+    if (Date.now() - inicio > RECARREGAR_MS && navigator.onLine !== false && Date.now() - ultimoToque > OCIOSO_MS) { location.reload(); return; }
     var precisaTudo = forcar || !versao || Date.now() - ultimoCompleto > COMPLETO_MS ||
       (estado && estado.hoje !== hojeLocal());
     ocupado = true;
@@ -286,10 +473,29 @@
 
   function carregar() {
     return Painel.estado().then(function (e) {
-      estado = e; versao = e.versao; ultimoCompleto = Date.now();
-      Painel.guardarCache(e);
-      desenhar();
+      if (enviando) return;  // uma ação da TV está a caminho; a resposta dela manda
+      receber(e);
       situacao(null);
+    });
+  }
+
+  function receber(e) {
+    estado = e; versao = e.versao; ultimoCompleto = Date.now();
+    Painel.guardarCache(e);
+    desenhar();
+  }
+
+  /* Ação feita na TV: muda na tela na hora e confirma com o Google. */
+  function enviar(acao, dados) {
+    enviando++;
+    return Painel.enviar(acao, dados).then(function (e) {
+      enviando--;
+      if (!enviando) receber(e);
+      situacao(null);
+    }, function (err) {
+      enviando--;
+      situacao(err);
+      conferir(true);
     });
   }
 
@@ -304,26 +510,127 @@
     }
   }
 
-  /* ---------- painel do dia ---------- */
+  var ganhoTimer;
+  function avisoGanho(texto) {
+    var g = $('ganho');
+    g.innerHTML = texto;
+    g.className = 'mostra';
+    clearTimeout(ganhoTimer);
+    ganhoTimer = setTimeout(function () { g.className = ''; }, 2600);
+  }
+
+  /* ---------- cliques ---------- */
+
+  function subirAte(el, teste) {
+    while (el && el !== document.body) { if (teste(el)) return el; el = el.parentNode; }
+    return null;
+  }
+  function attr(el, nome) { return el.getAttribute ? el.getAttribute(nome) : null; }
+
+  document.addEventListener('click', function (ev) {
+    tocou();
+    var el = subirAte(ev.target, function (x) {
+      return attr(x, 'data-tela') || attr(x, 'data-tarefa') || attr(x, 'data-item') || attr(x, 'data-treino') ||
+        attr(x, 'data-pessoa') || attr(x, 'data-acao');
+    });
+    if (!el || !estado) return;
+    if (attr(el, 'data-tela')) irPara(attr(el, 'data-tela'));
+    else if (attr(el, 'data-tarefa')) marcarTarefa(attr(el, 'data-tarefa'));
+    else if (attr(el, 'data-item')) marcarItem(attr(el, 'data-item'));
+    else if (attr(el, 'data-treino')) marcarTreino(attr(el, 'data-treino'));
+    else if (attr(el, 'data-pessoa')) { pessoaCardapio = attr(el, 'data-pessoa'); desenharCardapio(); }
+    else if (attr(el, 'data-acao') === 'fechar-comemora') $('comemora').className = '';
+  });
+  ['mousemove', 'keydown', 'wheel'].forEach(function (t) { document.addEventListener(t, tocou); });
+
+  function acharTarefa(id) {
+    for (var i = 0; i < estado.tarefas.length; i++) if (estado.tarefas[i].id === id) return estado.tarefas[i];
+    return null;
+  }
+
+  function recalcularProgresso() {
+    var p = { p1: { feitas: 0, total: 0 }, p2: { feitas: 0, total: 0 }, casal: { feitas: 0, total: 0 } };
+    for (var i = 0; i < estado.tarefas.length; i++) {
+      var t = estado.tarefas[i], q = p[t.quem] || p.casal;
+      q.total++; if (t.feita) q.feitas++;
+    }
+    estado.progresso = p;
+  }
+
+  function marcarTarefa(id) {
+    var t = acharTarefa(id);
+    if (!t) return;
+    t.feita = !t.feita;
+    var e = estado.estrelas, valor = e ? e.valor_tarefa : 1, meta = e ? e.valor_meta || 0 : 0, sinal = t.feita ? 1 : -1;
+    if (e) {
+      e.saldo[t.quem] += sinal * valor;
+      if (t.quem !== 'casal') e.saldo.casal += sinal * meta;
+    }
+    recalcularProgresso();
+    desenhar();
+    if (t.feita) avisoGanho('<span class="estrela-ic">+' + estrelas(valor) + '</span> ' +
+      (t.quem === 'casal' ? 'para a meta do casal' : 'para ' + esc(estado.nomes[t.quem]) +
+        (meta ? ' · <span class="estrela-ic">+' + meta + '</span> meta do casal' : '')));
+    enviar('marcar', { id: id, feita: t.feita });
+  }
+
+  function marcarItem(id) {
+    var lista, item, i, j;
+    for (i = 0; i < estado.listas.length; i++) {
+      for (j = 0; j < estado.listas[i].itens.length; j++) if (estado.listas[i].itens[j].id === id) { lista = estado.listas[i]; item = lista.itens[j]; }
+    }
+    if (!item) return;
+    item.feito = !item.feito;
+    desenharListas();
+    enviar('lista_marcar', { id: id, feito: item.feito });
+  }
+
+  function marcarTreino(quem) {
+    var e = estado.estrelas;
+    if (!e) return;
+    var feito = !e.treino_feito[quem];
+    e.treino_feito[quem] = feito;
+    e.saldo[quem] += feito ? e.valor_treino : -e.valor_treino;
+    desenhar();
+    if (feito) avisoGanho('<span class="estrela-ic">+' + estrelas(e.valor_treino) + '</span> treino de ' + esc(estado.nomes[quem]));
+    enviar('treino', { quem: quem, feito: feito });
+  }
+
+  /* ---------- desenho geral ---------- */
 
   function desenhar() {
     $('demo').style.display = estado.demo ? 'block' : 'none';
+    desenharHoje();
+    if (tela !== 'hoje') desenharTela();
+    desenharSaldoMenu();
+    trocarModo();
+    if (modo === 'bomdia') desenharBomDia();
+    conferirResgate();
+    clima();
+  }
+
+  function desenharSaldoMenu() {
+    var e = estado.estrelas;
+    $('menu-saldo').innerHTML = e ? '<b>' + (e.hoje.p1 + e.hoje.p2 + e.hoje.casal) + ' ★</b>hoje' : '';
+  }
+
+  /* ---------- hoje ---------- */
+
+  function desenharHoje() {
     var completo = {};
     for (var i = 0; i < Nucleo.QUEM.length; i++) {
       var q = Nucleo.QUEM[i];
       completo[q] = desenharCartao(q);
-      if (completoAntes && completo[q] && !completoAntes[q] && modo === 'dia') festa($('b-' + q));
+      if (completoAntes && completo[q] && !completoAntes[q] && modo === 'dia' && tela === 'hoje') festa($('b-' + q));
     }
     completoAntes = completo;
     desenharAgenda();
     desenharRodape();
-    trocarModo();
-    if (modo === 'bomdia') desenharBomDia();
-    clima();
+    desenharRefeicao();
   }
 
   function itemTarefa(t) {
-    return '<li class="tarefa' + (t.feita ? ' feita' : '') + '"><span class="ck"></span><span class="txt">' + esc(t.tarefa) +
+    return '<li class="tarefa clicavel' + (t.feita ? ' feita' : '') + '" data-tarefa="' + esc(t.id) + '"><span class="ck"></span><span class="txt">' + esc(t.tarefa) +
       (t.atrasada ? '<span class="tag atrasada">atrasada</span>' : '') + '</span></li>';
   }
 
@@ -334,7 +641,25 @@
     var completo = p.total > 0 && p.feitas === p.total;
     var conta = !p.total ? '' : completo ? 'Tudo feito' : p.feitas + ' de ' + p.total;
     var html = '<div class="cab"><h2>' + esc(estado.nomes[quem]) + '</h2><span class="conta num">' + conta + '</span></div>' +
-      '<div class="barra"><b style="width:' + (p.total ? Math.round(100 * p.feitas / p.total) : 0) + '%"></b></div><ul>';
+      '<div class="barra"><b style="width:' + (p.total ? Math.round(100 * p.feitas / p.total) : 0) + '%"></b></div>';
+    if (quem === 'casal') {
+      // casal: uma tarefa pendente por vez, grande, trocando como os próximos dias; clicar marca a que está na tela
+      el.innerHTML = html + '<div class="giro clicavel" id="giro-casal"></div><div class="pontos" id="pontos-casal"></div>';
+      el.className = 'cartao casal' + (completo ? ' completo' : '');
+      var pendentes = [];
+      for (i = 0; i < lista.length; i++) {
+        var t = lista[i];
+        if (t.feita) continue;
+        pendentes.push({ id: t.id, quem: 'casal', titulo: t.tarefa,
+          quando: t.atrasada ? 'Atrasada' : t.manha ? 'Rotina da manhã' : t.tipo === 'rotina' ? 'Rotina' : 'Tarefa' });
+      }
+      giro.casal.itens = pendentes;
+      giro.casal.vazio = lista.length ? 'Tudo feito por hoje' : 'Nada para hoje';
+      if (giro.casal.i >= pendentes.length) giro.casal.i = 0;
+      mostrarGiro('casal');
+      return completo;
+    }
+    html += '<ul>';
     if (!lista.length) html += '<li class="vazio">Nada para hoje</li>';
     for (i = 0; i < lista.length; i++) html += itemTarefa(lista[i]);
     el.innerHTML = html + '</ul>';
@@ -358,8 +683,13 @@
 
   function festa(el) {
     el.className += ' festa';
+    soltarConfete(el, 24);
+    setTimeout(function () { el.className = el.className.replace(' festa', ''); }, 4000);
+  }
+
+  function soltarConfete(el, n) {
     var cores = ['#ff9f0a', '#40c8e0', '#bf5af2', '#30d158', '#ffd60a'];
-    for (var i = 0; i < 24; i++) {
+    for (var i = 0; i < n; i++) {
       var c = document.createElement('span');
       c.className = 'confete';
       c.style.left = Math.random() * 100 + '%';
@@ -368,13 +698,17 @@
       el.appendChild(c);
     }
     setTimeout(function () {
-      el.className = el.className.replace(' festa', '');
       var cs = el.querySelectorAll('.confete');
       for (var j = 0; j < cs.length; j++) cs[j].parentNode.removeChild(cs[j]);
-    }, 4000);
+    }, 3600);
   }
 
   function minutos(hhmm) { var p = String(hhmm).split(':'); return +p[0] * 60 + +p[1]; }
+  /* "12h30", "7h", "14h e 17h" → minutos do primeiro horário */
+  function minutosRefeicao(h) {
+    var m = String(h).match(/(\d{1,2})h(\d{2})?/);
+    return m ? +m[1] * 60 + (+m[2] || 0) : 0;
+  }
 
   function eventosDeHoje() { return estado.hoje === hojeLocal() ? estado.agenda : []; }
 
@@ -401,10 +735,37 @@
     encaixar(el.getElementsByTagName('ul')[0], 'compromisso');
   }
 
+  /* Próxima refeição de cada um; depois do jantar, o café de amanhã. */
+  function proximaRefeicao(q) {
+    var pl = estado.plano;
+    if (!pl || !pl.hoje[q]) return null;
+    var refs = pl.hoje[q].refeicoes, m = minutosAgora();
+    for (var i = 0; i < refs.length; i++) {
+      if (minutosRefeicao(refs[i].h) + 45 > m) return { r: refs[i], amanha: false };
+    }
+    var amanha = Nucleo.SIGLAS[Nucleo.diaDaSemana(Nucleo.somarDias(estado.hoje, 1))];
+    var lista = (pl.cardapio[q] || {})[amanha] || [];
+    return lista.length ? { r: lista[0], amanha: true } : null;
+  }
+
+  function desenharRefeicao() {
+    var el = $('refeicao');
+    if (!estado.plano) { el.style.display = 'none'; return; }
+    el.style.display = '';
+    var html = '<div class="rotulo"><span>Próxima refeição</span></div>';
+    ['p1', 'p2'].forEach(function (q) {
+      var p = proximaRefeicao(q);
+      if (!p) return;
+      html += '<div class="pessoa"><i class="bg-' + q + '"></i><span class="quando">' + (p.amanha ? 'amanhã ' : '') + esc(p.r.h) +
+        '</span><span class="prato">' + esc(p.r.n) + '</span></div>';
+    });
+    el.innerHTML = html;
+  }
+
   function desenharRodape() {
     var r = estado.recado || {};
     $('recado').innerHTML = '<div class="rotulo">Recado</div>' + (r.texto ?
-      '<div class="texto' + (r.texto.length > 90 ? ' longo' : r.texto.length > 50 ? ' medio' : '') + '">' + esc(r.texto) +
+      '<div class="texto' + (r.texto.length > 80 ? ' longo' : r.texto.length > 45 ? ' medio' : '') + '">' + esc(r.texto) +
       '</div><div class="autor">' + esc(r.autor ? '— ' + r.autor : '') + '</div>' :
       '<div class="texto" style="color:#48484a">Nenhum recado. Escreva um pelo celular.</div>');
 
@@ -413,20 +774,18 @@
       if (!d) { el.innerHTML = ''; giro[n].itens = []; continue; }
       var dt = Nucleo.paraData(d.data);
       var nome = n === 0 ? 'Amanhã' : Nucleo.DIAS[dt.getDay()].replace('-feira', '');
-      var partes = [];
-      if (d.agenda.length) partes.push(d.agenda.length + ' compromisso' + (d.agenda.length > 1 ? 's' : ''));
-      if (d.tarefas.length) partes.push(d.tarefas.length + ' tarefa' + (d.tarefas.length > 1 ? 's' : ''));
       el.innerHTML = '<div class="rotulo"><span><b>' + nome + '</b> · ' + Nucleo.SIGLAS_BONITAS[dt.getDay()] + ' ' + dt.getDate() +
-        '</span><span class="resumo">' + partes.join(' · ') + '</span></div><div class="giro" id="giro-' + n + '"></div><div class="pontos" id="pontos-' + n + '"></div>';
+        '</span></div><div class="giro" id="giro-' + n + '"></div><div class="pontos" id="pontos-' + n + '"></div>';
       giro[n].itens = itensDoDia(d);
       if (giro[n].i >= giro[n].itens.length) giro[n].i = 0;
       mostrarGiro(n);
     }
   }
 
-  /* ---------- próximos dias: um item por vez ---------- */
+  /* ---------- itens girando: próximos dias e casal ---------- */
 
-  var GIRO_MS = 6000, giro = [{ itens: [], i: 0 }, { itens: [], i: 0 }];
+  var GIRO_MS = 6000, GIROS = [0, 1, 'casal'];
+  var giro = { 0: { itens: [], i: 0 }, 1: { itens: [], i: 0 }, casal: { itens: [], i: 0 } };
 
   function itensDoDia(d) {
     var l = [], i;
@@ -446,13 +805,15 @@
     var g = giro[n], caixa = $('giro-' + n), pontos = $('pontos-' + n);
     if (!caixa) return;
     if (!g.itens.length) {
-      caixa.innerHTML = '<div class="nada">Nada marcado</div>';
+      caixa.innerHTML = '<div class="nada">' + esc(g.vazio || 'Nada marcado') + '</div>';
+      caixa.removeAttribute('data-tarefa');
       pontos.innerHTML = '';
       return;
     }
     var it = g.itens[g.i];
-    caixa.innerHTML = '<div class="quando num"><i class="bg-' + it.quem + '"></i>' + esc(it.quando) + '</div>' +
-      '<div class="titulo">' + esc(it.titulo) + '</div>';
+    if (it.id) caixa.setAttribute('data-tarefa', it.id); else caixa.removeAttribute('data-tarefa');
+    caixa.innerHTML = '<div class="quando num"><i class="bg-' + it.quem + '"></i>' + esc(it.quando) +
+      (it.id ? '<span class="dica">clique para marcar</span>' : '') + '</div><div class="titulo">' + esc(it.titulo) + '</div>';
     var p = '';
     if (g.itens.length > 1 && g.itens.length <= 10) {
       for (var i = 0; i < g.itens.length; i++) p += '<b' + (i === g.i ? ' class="at"' : '') + '></b>';
@@ -463,21 +824,194 @@
   }
 
   function girar() {
-    if (modo !== 'dia') return;
-    for (var n = 0; n < 2; n++) {
+    if (modo !== 'dia' || tela !== 'hoje') return;
+    for (var k = 0; k < GIROS.length; k++) {
+      var n = GIROS[k];
       if (giro[n].itens.length < 2) continue;
       (function (n) {
         var caixa = $('giro-' + n);
         if (!caixa) return;
-        caixa.className = 'giro some';
+        caixa.className = caixa.className + ' some';
         setTimeout(function () {
           giro[n].i = (giro[n].i + 1) % giro[n].itens.length;
           mostrarGiro(n);
           var nova = $('giro-' + n);
-          if (nova) nova.className = 'giro';
+          if (nova) nova.className = nova.className.replace(' some', '');
         }, 450);
       })(n);
     }
+  }
+
+  /* ---------- treino & dieta ---------- */
+
+  function desenharTreino() {
+    var el = $('pg-treino'), pl = estado.plano;
+    if (!pl) { el.innerHTML = '<div class="cartao"><div class="vazio">O plano de treino e dieta ainda não está no Google.</div></div>'; return; }
+    var pct = Math.min(100, Math.max(0, 100 * (pl.semana - 1) / pl.semanas + 100 / pl.semanas / 2));
+    var html = '<div class="faixa"><h1>' + esc(pl.titulo || 'Treino & Dieta') + '</h1>' +
+      '<div class="horizonte"><b style="width:' + pct + '%"></b><i style="left:' + pct + '%"></i></div>' +
+      '<div class="sub num">' + (pl.dias ? 'faltam <b style="color:#f5f5f7">' + pl.dias + ' dias</b> · ' : '') + 'semana ' + pl.semana + ' de ' + pl.semanas + '</div></div>' +
+      '<div class="linhas-pessoa">';
+    var m = minutosAgora();
+    ['p1', 'p2'].forEach(function (q) {
+      var h = pl.hoje[q];
+      if (!h) return;
+      var feito = estado.estrelas && estado.estrelas.treino_feito[q];
+      var valor = estado.estrelas ? estado.estrelas.valor_treino : 3;
+      var t = h.treino || { title: 'Descanso', meta: '', blocks: [] };
+      html += '<div class="pessoa-treino ' + q + '">' +
+        '<div class="cartao resumo-t"><h2 class="t-' + q + '">' + esc(estado.nomes[q]) + '</h2>' +
+        (h.fase ? '<div class="fase">' + esc(h.fase) + '</div>' : '') +
+        '<div class="titulo-t">' + esc(t.title) + '</div><div class="meta">' + esc(t.meta) + '</div>' +
+        '<button class="botao-treino' + (feito ? ' feito' : '') + '" data-treino="' + q + '">' +
+        (feito ? '✓ Treino feito' : 'Marcar treino feito<span class="estrela">+' + estrelas(valor) + '</span>') + '</button></div>';
+      // exercícios
+      html += '<div class="cartao exercicios"><ul>';
+      for (var b = 0; b < t.blocks.length; b++) {
+        html += '<li class="bloco">' + esc(t.blocks[b][0]) + '</li>';
+        var exs = t.blocks[b][1];
+        for (var x = 0; x < exs.length; x++) html += '<li>' + esc(exs[x][0]) + '<span>' + esc(exs[x][1]) + '</span></li>';
+      }
+      html += '</ul>' + (h.corrida ? '<div class="corrida"><b>Corrida 8h30:</b> ' + esc(h.corrida) + '</div>' : '') + '</div>';
+      // refeições
+      html += '<div class="cartao refeicoes"><div class="rotulo" style="margin-bottom:.5rem">Refeições de hoje</div><div>';
+      var achouProxima = false;
+      for (var r = 0; r < h.refeicoes.length; r++) {
+        var ref = h.refeicoes[r], ini = minutosRefeicao(ref.h);
+        var classe = '';
+        if (!achouProxima && ini + 45 > m) { classe = ' agora'; achouProxima = true; }
+        else if (!achouProxima) classe = ' passou';
+        html += '<div class="ref' + classe + '"><div class="h">' + esc(ref.h) + '</div><div class="n">' + esc(ref.n) +
+          '<small>' + esc(ref.t) + '</small></div><div class="k num">' + (ref.k ? ref.k + ' kcal' : '') + '</div></div>';
+      }
+      html += '</div></div></div>';
+    });
+    el.innerHTML = html + '</div>';
+  }
+
+  /* ---------- cardápio da semana ---------- */
+
+  var COLUNAS = [['Café', /caf/i], ['Almoço', /almo/i], ['Lanche', /lanche(?! da noite)|p[oó]s/i], ['Jantar', /jantar|noite/i]];
+
+  function desenharCardapio() {
+    var el = $('pg-cardapio'), pl = estado.plano;
+    if (!pl) { el.innerHTML = '<div class="cartao"><div class="vazio">O cardápio ainda não está no Google.</div></div>'; return; }
+    var ordem = ['seg', 'ter', 'qua', 'qui', 'sex', 'sab', 'dom'], nomes = ['segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado', 'domingo'];
+    var hojeSigla = Nucleo.SIGLAS[Nucleo.diaDaSemana(estado.hoje)];
+    var segunda = Nucleo.somarDias(estado.hoje, -((Nucleo.diaDaSemana(estado.hoje) + 6) % 7));
+    var html = '<div class="faixa"><h1>Cardápio da semana</h1><div class="seg">' +
+      '<button data-pessoa="p1" class="' + (pessoaCardapio === 'p1' ? 'sel' : '') + '">' + esc(estado.nomes.p1) + '</button>' +
+      '<button data-pessoa="p2" class="' + (pessoaCardapio === 'p2' ? 'sel' : '') + '">' + esc(estado.nomes.p2) + '</button></div></div>' +
+      '<div class="grade"><div class="linha"><div class="dia"></div>';
+    for (var c = 0; c < COLUNAS.length; c++) html += '<div class="cel titulo-col">' + COLUNAS[c][0] + '</div>';
+    html += '</div>';
+    var semana = pl.cardapio[pessoaCardapio] || {};
+    for (var d = 0; d < ordem.length; d++) {
+      var refs = semana[ordem[d]] || [], data = Nucleo.paraData(Nucleo.somarDias(segunda, d));
+      html += '<div class="linha' + (ordem[d] === hojeSigla ? ' hoje' : '') + '"><div class="dia"><b>' + nomes[d].slice(0, 3) +
+        '</b><small>' + data.getDate() + '/' + pad(data.getMonth() + 1) + '</small></div>';
+      for (c = 0; c < COLUNAS.length; c++) {
+        var achou = null;
+        for (var r = 0; r < refs.length; r++) if (COLUNAS[c][1].test(refs[r].t)) { achou = refs[r]; break; }
+        html += '<div class="cel">' + (achou ? '<div class="n">' + esc(achou.n) + '</div><small>' + esc(achou.h) + (achou.k ? ' · ' + achou.k + ' kcal' : '') + '</small>' : '') + '</div>';
+      }
+      html += '</div>';
+    }
+    el.innerHTML = html + '</div>';
+  }
+
+  /* ---------- listas ---------- */
+
+  function desenharListas() {
+    var el = $('pg-listas'), html = '<div class="faixa"><h1>Listas</h1><div class="sub">Clique para marcar · adicione itens pelo celular</div></div><div class="listas">';
+    if (!estado.listas) { el.innerHTML = '<div class="cartao"><div class="vazio">Atualize o script do Google para usar as listas.</div></div>'; return; }
+    for (var i = 0; i < estado.listas.length && i < 4; i++) {
+      var l = estado.listas[i];
+      html += '<div class="cartao"><div class="cab"><h2>' + esc(l.nome) + '</h2><span class="conta num">' + (l.pendentes ? l.pendentes : 'Tudo certo') + '</span></div><ul>';
+      if (!l.itens.length) html += '<li class="vazio">Lista vazia</li>';
+      for (var j = 0; j < l.itens.length; j++) {
+        var it = l.itens[j];
+        html += '<li class="item clicavel' + (it.feito ? ' feita' : '') + '" data-item="' + esc(it.id) + '"><span class="ck"></span><span class="txt">' + esc(it.item) + '</span></li>';
+      }
+      html += '</ul></div>';
+    }
+    el.innerHTML = html + '</div>';
+    var uls = el.getElementsByTagName('ul');
+    for (i = 0; i < uls.length; i++) encaixar(uls[i], 'item');
+  }
+
+  /* ---------- estrelas e recompensas ---------- */
+
+  function desenharEstrelas() {
+    var el = $('pg-estrelas'), e = estado.estrelas;
+    if (!e) { el.innerHTML = ''; return; }
+    var html = '<div class="faixa"><h1>Estrelas</h1><div class="sub">tarefa ' + estrelas(e.valor_tarefa) + (e.valor_meta ? ' (+' + e.valor_meta + ' para o casal)' : '') + ' · treino ' + estrelas(e.valor_treino) +
+      ' · resgate pelo celular</div></div><div class="saldos">';
+    Nucleo.QUEM.forEach(function (q) {
+      var prox = proximaRecompensa(q);
+      html += '<div class="cartao ' + q + '"><div class="cab"><h2>' + (q === 'casal' ? 'Meta do casal' : esc(estado.nomes[q])) + '</h2>' +
+        '<span class="conta num">+' + e.hoje[q] + ' hoje</span></div><div class="valor num"><span class="estrela-ic">★</span> ' + e.saldo[q] + '</div>' +
+        '<div class="proxima">' + (prox ? (prox.falta > 0 ? 'Faltam <b>' + prox.falta + '</b> para ' + esc(prox.r.nome) : '<b style="color:#30d158">Já dá para</b> ' + esc(prox.r.nome)) : 'Cadastre recompensas no celular') + '</div></div>';
+    });
+    html += '</div><div class="recompensas">';
+    Nucleo.QUEM.forEach(function (q) {
+      html += '<div class="cartao"><div class="rotulo" style="margin-bottom:.4rem">Recompensas · ' + esc(estado.nomes[q]) + '</div><div>';
+      var tem = false;
+      for (var i = 0; i < estado.recompensas.length; i++) {
+        var r = estado.recompensas[i];
+        if (r.quem !== q) continue;
+        tem = true;
+        var pct = Math.min(100, Math.round(100 * Math.max(0, e.saldo[q]) / r.custo));
+        html += '<div class="rec"><div class="topo-r"><span>' + esc(r.nome) + '</span><span class="custo num">' + estrelas(r.custo) + '</span></div>' +
+          '<div class="barra"><b style="width:' + pct + '%"></b></div>' + (pct >= 100 ? '<div class="pronta">Pronta para resgatar</div>' : '') + '</div>';
+      }
+      if (!tem) html += '<div class="vazio">Nenhuma ainda</div>';
+      html += '</div></div>';
+    });
+    html += '<div class="cartao"><div class="rotulo" style="margin-bottom:.4rem">Últimas estrelas</div><ul class="hist">';
+    for (var h = 0; h < e.historico.length; h++) {
+      var it = e.historico[h];
+      html += '<li><span>' + esc((it.quem === 'casal' ? 'Casal' : estado.nomes[it.quem]) + ' · ' + (it.nome || it.motivo)) + '</span><b class="num ' + (it.qtd < 0 ? 'menos' : 'mais') + '">' + (it.qtd > 0 ? '+' : '') + it.qtd + '</b></li>';
+    }
+    if (!e.historico.length) html += '<li class="vazio">Nada ainda</li>';
+    el.innerHTML = html + '</ul></div></div>';
+    var hist = el.querySelector('.hist');
+    if (hist) encaixar(hist, 'lançamento');
+  }
+
+  /* A mais cara que já dá para resgatar; se nenhuma der, a mais perto de dar. */
+  function proximaRecompensa(q) {
+    var pronta = null, perto = null, saldo = estado.estrelas.saldo[q];
+    for (var i = 0; i < estado.recompensas.length; i++) {
+      var r = estado.recompensas[i];
+      if (r.quem !== q) continue;
+      var falta = r.custo - saldo;
+      if (falta <= 0) { if (!pronta || r.custo > pronta.r.custo) pronta = { r: r, falta: falta }; }
+      else if (!perto || falta < perto.falta) perto = { r: r, falta: falta };
+    }
+    return pronta || perto;
+  }
+
+  /* Alguém resgatou uma recompensa (no celular): comemoração na TV, uma vez só. */
+  function conferirResgate() {
+    var u = estado.estrelas && estado.estrelas.ultimo_resgate;
+    if (!u) return;
+    var visto = null;
+    try { visto = localStorage.getItem('painel_resgate_visto'); } catch (e) { }
+    if (visto === u.id) return;
+    try { localStorage.setItem('painel_resgate_visto', u.id); } catch (e) { }
+    var quando = String(u.quando).replace(' ', 'T'), idade = (Date.now() - new Date(quando).getTime()) / 60000;
+    if (!visto && !(idade < 15)) return;  // primeira vez nesta TV: só comemora se for recente
+    if (idade > 30) return;
+    var quem = u.quem === 'casal' ? estado.nomes.p1 + ' e ' + estado.nomes.p2 : estado.nomes[u.quem];
+    var caixa = $('comemora');
+    caixa.innerHTML = '<div class="caixa"><svg viewBox="0 0 100 100"><path d="M38 52 30 92l20-10 20 10-8-40z" fill="#ff375f"/><path d="M44 52v34l6-3 6 3V52z" fill="#fff"/>' +
+      '<circle cx="50" cy="40" r="30" fill="#ffd60a"/><circle cx="50" cy="40" r="23" fill="#ffcc00" stroke="#ffe680" stroke-width="2"/>' +
+      '<path d="m50 26 4.4 9 9.9 1.4-7.2 7 1.7 9.8-8.8-4.6-8.8 4.6 1.7-9.8-7.2-7 9.9-1.4z" fill="#fff"/></svg>' +
+      '<h2>Uhuul!</h2><p><b>' + esc(quem) + '</b> resgatou<br>' + esc(u.nome) + '</p><button data-acao="fechar-comemora">Fechar</button></div>';
+    caixa.className = 'ativo';
+    soltarConfete(caixa, 40);
+    setTimeout(function () { caixa.className = ''; }, 12000);
   }
 
   /* ---------- bom dia ---------- */
@@ -622,13 +1156,16 @@
 
   /* ---------- início ---------- */
 
+  $('noite').addEventListener('click', function () { acordadoAte = Date.now() + ACORDADO_MS; trocarModo(); });
   relogio();
+  if (forcado && NOMES_TELA.indexOf(forcado) >= 0) irPara(forcado);
   if (estado) desenhar();
   conferir(true);
   setInterval(relogio, 1000);
   setInterval(function () { conferir(false); }, CONFERIR_MS);
   setInterval(mexerUmPouco, 120000);
   setInterval(girar, GIRO_MS);
+  setInterval(conferirOcioso, 15000);
   setInterval(function () { if (modo !== 'noite') clima(); }, 60000);
   window.addEventListener('resize', function () { if (estado) desenhar(); });
   if (Painel.demo) Painel.aoMudarEmOutraAba(function () { conferir(true); });

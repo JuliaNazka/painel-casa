@@ -6,7 +6,7 @@
  * ES5 de propósito (TV LG antiga).
  */
 var Painel = (function () {
-  var CHAVE_CONEXAO = 'painel_conexao', CHAVE_CACHE = 'painel_estado', CHAVE_DEMO = 'painel_demo',
+  var CHAVE_CONEXAO = 'painel_conexao', CHAVE_CACHE = 'painel_estado', CHAVE_DEMO = 'painel_demo3',
     CHAVE_DEMO_VERSAO = 'painel_demo_versao';
 
   function ler(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }
@@ -94,8 +94,65 @@ var Painel = (function () {
           rotina_id: '', feita: false, feita_em: '', criada_em: '' },
         { id: 't4', data: Nucleo.somarDias(hoje, 1), tarefa: 'Mercado da semana', quem: 'casal', tipo: 'pontual',
           rotina_id: '', feita: false, feita_em: '', criada_em: '' }
+      ],
+      listas: itensDemo(hoje, 'Compras', ['Peito de frango', 'Ovos', 'Arroz', 'Feijão', 'Iogurte natural', 'Banana', 'Brócolis', 'Pão integral'])
+        .concat(itensDemo(hoje, 'Casa', ['Trocar a lâmpada da varanda', 'Ligar para o técnico da geladeira', 'Organizar o armário']))
+        .concat(itensDemo(hoje, 'Ideias', ['Filme: Duna 3', 'Restaurante novo no Sudoeste', 'Presente de aniversário da Ana'])),
+      recompensas: [
+        { id: 'k1', nome: 'Escolher o filme da noite', quem: 'p1', custo: 10 },
+        { id: 'k2', nome: 'Escolher o restaurante do fim de semana', quem: 'p2', custo: 15 },
+        { id: 'k3', nome: 'Massagem de 15 minutos', quem: 'p1', custo: 20 },
+        { id: 'k4', nome: 'Massagem de 15 minutos', quem: 'p2', custo: 20 },
+        { id: 'k5', nome: 'Passeio de domingo', quem: 'casal', custo: 40 },
+        { id: 'k6', nome: 'Jantar fora especial', quem: 'casal', custo: 80 }
+      ],
+      estrelas: [
+        { id: 's1', data: Nucleo.somarDias(hoje, -2), quem: 'p1', qtd: 8, motivo: 'tarefa', ref: 'x1', nome: 'Semana passada', quando: Nucleo.somarDias(hoje, -2) + ' 20:00' },
+        { id: 's2', data: Nucleo.somarDias(hoje, -2), quem: 'p2', qtd: 11, motivo: 'tarefa', ref: 'x2', nome: 'Semana passada', quando: Nucleo.somarDias(hoje, -2) + ' 20:00' },
+        { id: 's3', data: Nucleo.somarDias(hoje, -1), quem: 'casal', qtd: 23, motivo: 'tarefa', ref: 'x3', nome: 'Semana passada', quando: Nucleo.somarDias(hoje, -1) + ' 20:00' }
       ]
     };
+  }
+
+  function itensDemo(hoje, lista, nomes) {
+    var l = [];
+    for (var i = 0; i < nomes.length; i++) {
+      l.push({ id: lista.toLowerCase() + '-' + i, lista: lista, item: nomes[i], feito: false, criado_em: hoje + ' 08:00', feito_em: '' });
+    }
+    return l;
+  }
+
+  /* Plano de exemplo, genérico: o plano de verdade fica só no Google. */
+  function planoDemo() {
+    var dias = ['seg', 'ter', 'qua', 'qui', 'sex', 'sab', 'dom'];
+    var cafes = ['Crepioca de queijo', 'Ovos mexidos com pão', 'Overnight oats', 'Tapioca de frango', 'Panqueca de banana', 'Café reforçado', 'Crepioca doce'];
+    var almocos = ['Frango com legumes assados', 'Patinho com batata-doce', 'Peixe com lentilha', 'Strogonoff leve', 'Carne com abobrinha', 'Prato livre com regra', 'Almoço de domingo'];
+    var lanches = ['Iogurte com morango', 'Shake de banana', 'Sanduíche de atum', 'Bowl de iogurte', 'Torradas com cottage'];
+    var jantares = ['Wrap de frango', 'Hambúrguer caseiro', 'Omelete recheada', 'Pizza de rap10', 'Bowl mexicano', 'Noite do hambúrguer', 'Noite da pipoca'];
+    var treinos = [
+      { title: 'Inferiores A', meta: 'Cerca de 60 minutos', blocks: [['Aquecimento', [['Bike leve', '5 min']]], ['Musculação', [['Elevação pélvica', '3 × 12'], ['Stiff com halteres', '3 × 10'], ['Mesa flexora', '3 × 12'], ['Abdutora', '3 × 15']]], ['Cardio', [['Esteira inclinada', '12 min']]]] },
+      { title: 'Superiores A', meta: 'Cerca de 60 minutos', blocks: [['Aquecimento', [['Bike leve', '5 min']]], ['Musculação', [['Puxada na polia', '3 × 12'], ['Remada baixa', '3 × 12'], ['Rosca direta', '3 × 10']]], ['Core', [['Prancha', '3 × 40 s']]]] },
+      { title: 'Recuperação ativa', meta: '40 minutos, bem leve', blocks: [['Cardio leve', [['Caminhada', '30 min']]], ['Mobilidade', [['Alongamento geral', '10 min']]]] }
+    ];
+    var P = { titulo: 'Exemplo', inicio: Nucleo.somarDias(Nucleo.paraTexto(new Date()), -20), fim: Nucleo.somarDias(Nucleo.paraTexto(new Date()), 63),
+      semanas: 12, pessoas: { p1: 'a', p2: 'b' }, menu: { a: {}, b: {} }, treino: { a: {}, b: {} },
+      fases: { a: [{ w: [1, 12], t: 'Progressão' }], b: [{ w: [1, 12], t: 'Progressão' }] },
+      corrida: { b: { dias: ['seg', 'qua', 'sex'], semanas: { 3: '5 × (3 min trotando + 1 min 30 s caminhando)', 4: '4 × (4 min trotando + 1 min 30 s caminhando)' } } },
+      compras: ['Peito de frango: 2 kg', 'Ovos: 3 dúzias', 'Arroz', 'Feijão', 'Batata-doce', 'Iogurte natural', 'Frutas da semana'] };
+    for (var i = 0; i < dias.length; i++) {
+      var fds = i >= 5;
+      var base = [
+        { t: 'Café', h: fds ? '8h30' : '7h', k: 330, n: cafes[i], i: ['Porção do plano'] },
+        { t: 'Almoço', h: fds ? '13h' : '12h30', k: 480, n: almocos[i], i: ['Proteína, arroz e feijão', 'Legumes à vontade', 'Doce do dia'] }
+      ];
+      if (!fds) base.push({ t: 'Lanche', h: '16h', k: 250, n: lanches[i % lanches.length], i: ['Porção do plano'] });
+      base.push({ t: fds ? 'Lanche da noite' : 'Jantar', h: '19h30', k: 380, n: jantares[i], i: ['Porção do plano'] });
+      P.menu.a[dias[i]] = { ctx: 'Exemplo de dia do plano.', total: '≈ 1.450 kcal', meals: base };
+      P.menu.b[dias[i]] = { ctx: 'Exemplo de dia do plano.', total: '≈ 2.500 kcal', meals: base };
+      P.treino.a[dias[i]] = treinos[i === 6 ? 2 : i % 2];
+      P.treino.b[dias[i]] = treinos[i === 6 ? 2 : (i + 1) % 2];
+    }
+    return P;
   }
 
   function agendaDemo(hoje) {
@@ -127,7 +184,7 @@ var Painel = (function () {
   function estadoDemo() {
     var dados = dadosDemo(), hoje = Nucleo.paraTexto(new Date());
     if (Nucleo.garantirRotina(dados, hoje, idDemo)) gravar(CHAVE_DEMO, dados);
-    var e = Nucleo.montarEstado(dados, hoje, agendaDemo(hoje));
+    var e = Nucleo.montarEstado(dados, hoje, agendaDemo(hoje), Nucleo.montarPlano(planoDemo(), hoje));
     e.versao = versaoDemo();
     e.demo = true;
     return e;

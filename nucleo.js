@@ -91,8 +91,9 @@ var Nucleo = (function () {
   }
 
   /* O que a TV e o celular mostram. agendaPorDia = { "aaaa-mm-dd": [eventos] } */
-  function montarEstado(dados, hoje, agendaPorDia) {
+  function montarEstado(dados, hoje, agendaPorDia, plano) {
     agendaPorDia = agendaPorDia || {};
+    garantirExtras(dados);
     var lista = [], i, t, manha = {};
     for (i = 0; i < dados.rotina.length; i++) if (dados.rotina[i].manha) manha[dados.rotina[i].id] = true;
     for (i = 0; i < dados.tarefas.length; i++) {
@@ -148,8 +149,111 @@ var Nucleo = (function () {
       progresso: progresso,
       agenda: agendaPorDia[hoje] || [],
       proximos: proximos,
-      rotina: rotina
+      rotina: rotina,
+      estrelas: estrelasDoEstado(dados, hoje, cfg),
+      listas: listasDoEstado(dados, hoje, cfg),
+      recompensas: dados.recompensas.slice(),
+      plano: plano || null
     };
+  }
+
+  /* ---------- estrelas, listas e recompensas ---------- */
+
+  function num(v, padrao) { var n = parseInt(v, 10); return isNaN(n) ? padrao : n; }
+
+  function garantirExtras(dados) {
+    dados.listas = dados.listas || [];
+    dados.recompensas = dados.recompensas || [];
+    dados.estrelas = dados.estrelas || [];
+    dados.config = dados.config || {};
+  }
+
+  function nomesListas(cfg) {
+    var l = String(cfg.listas || 'Compras, Casa, Ideias').split(','), saida = [];
+    for (var i = 0; i < l.length; i++) { var n = l[i].replace(/\s+/g, ' ').trim(); if (n) saida.push(n); }
+    return saida;
+  }
+
+  function saldoDe(dados, quem) {
+    var s = 0;
+    for (var i = 0; i < dados.estrelas.length; i++) if (dados.estrelas[i].quem === quem) s += num(dados.estrelas[i].qtd, 0);
+    return s;
+  }
+
+  function estrelasDoEstado(dados, hoje, cfg) {
+    var saldo = { p1: 0, p2: 0, casal: 0 }, deHoje = { p1: 0, p2: 0, casal: 0 }, treino = { p1: false, p2: false };
+    var ultimo = null, historico = [];
+    for (var i = 0; i < dados.estrelas.length; i++) {
+      var e = dados.estrelas[i], q = saldo.hasOwnProperty(e.quem) ? e.quem : 'casal', n = num(e.qtd, 0);
+      saldo[q] += n;
+      if (e.data === hoje && n > 0) deHoje[q] += n;
+      if (e.motivo === 'treino' && e.data === hoje && treino.hasOwnProperty(q)) treino[q] = true;
+      if (e.motivo === 'resgate' && (!ultimo || String(e.quando) > String(ultimo.quando))) {
+        ultimo = { id: e.id, nome: e.nome, quem: q, quando: e.quando, custo: -n };
+      }
+      historico.push({ quem: q, qtd: n, motivo: e.motivo, nome: e.nome, quando: e.quando });
+    }
+    historico.sort(function (a, b) { return String(b.quando) < String(a.quando) ? -1 : String(b.quando) > String(a.quando) ? 1 : 0; });
+    return { saldo: saldo, hoje: deHoje, treino_feito: treino, ultimo_resgate: ultimo, historico: historico.slice(0, 20),
+      valor_tarefa: num(cfg.estrelas_tarefa, 1), valor_treino: num(cfg.estrelas_treino, 3), valor_meta: num(cfg.estrelas_meta, 1) };
+  }
+
+  /* Itens pendentes e os concluídos hoje; concluído de outro dia some da lista. */
+  function listasDoEstado(dados, hoje, cfg) {
+    var nomes = nomesListas(cfg), i, j;
+    for (i = 0; i < dados.listas.length; i++) if (nomes.indexOf(dados.listas[i].lista) < 0) nomes.push(dados.listas[i].lista);
+    var saida = [];
+    for (i = 0; i < nomes.length; i++) {
+      var pend = [], feitos = [];
+      for (j = 0; j < dados.listas.length; j++) {
+        var it = dados.listas[j];
+        if (it.lista !== nomes[i]) continue;
+        if (!it.feito) pend.push(copiar(it));
+        else if (String(it.feito_em).slice(0, 10) === hoje) feitos.push(copiar(it));
+      }
+      saida.push({ nome: nomes[i], itens: pend.concat(feitos), pendentes: pend.length });
+    }
+    return saida;
+  }
+
+  function lancar(dados, novoId, agora, quem, qtd, motivo, ref, nome) {
+    dados.estrelas.push({ id: novoId(), data: agora.slice(0, 10), quem: quem, qtd: qtd, motivo: motivo, ref: ref,
+      nome: nome || '', quando: agora });
+  }
+  function tirarLancamentos(dados, motivo, ref) {
+    for (var i = dados.estrelas.length - 1; i >= 0; i--) {
+      if (dados.estrelas[i].motivo === motivo && dados.estrelas[i].ref === ref) dados.estrelas.splice(i, 1);
+    }
+  }
+
+  /* ---------- plano de dieta e treino ---------- */
+
+  /* P = dados do plano (no Google, privado). Devolve só o que a TV e o celular mostram hoje e na semana. */
+  function montarPlano(P, hoje) {
+    if (!P) return null;
+    var DIA = 86400000, d = paraData(hoje), ini = paraData(P.inicio), fim = paraData(P.fim);
+    var total = P.semanas || 12;
+    var semana = Math.min(total, Math.max(1, Math.floor((d - ini) / DIA / 7) + 1));
+    var chave = SIGLAS[d.getDay()], ordem = ['seg', 'ter', 'qua', 'qui', 'sex', 'sab', 'dom'];
+    var hojeP = {}, cardapio = {}, q, i;
+    for (q in P.pessoas) {
+      if (!P.pessoas.hasOwnProperty(q)) continue;
+      var nome = P.pessoas[q], menu = (P.menu || {})[nome] || {}, treinos = (P.treino || {})[nome] || {};
+      var m = menu[chave] || { meals: [] }, fase = null, fases = (P.fases || {})[nome] || [];
+      for (i = 0; i < fases.length; i++) if (semana >= fases[i].w[0] && semana <= fases[i].w[1]) fase = fases[i].t;
+      var corrida = null, c = (P.corrida || {})[nome];
+      if (c && c.dias.indexOf(chave) >= 0) corrida = c.semanas[semana] || null;
+      hojeP[q] = { ctx: m.ctx || '', total: m.total || '', refeicoes: m.meals || [], treino: treinos[chave] || null,
+        fase: fase, corrida: corrida };
+      cardapio[q] = {};
+      for (i = 0; i < ordem.length; i++) {
+        var lista = (menu[ordem[i]] || { meals: [] }).meals, curto = [];
+        for (var j = 0; j < lista.length; j++) curto.push({ t: lista[j].t, h: lista[j].h, n: lista[j].n, k: lista[j].k });
+        cardapio[q][ordem[i]] = curto;
+      }
+    }
+    return { titulo: P.titulo || '', dias: Math.max(0, Math.round((fim - d) / DIA)), semana: semana, semanas: total,
+      fim: P.fim, hoje: hojeP, cardapio: cardapio, compras: P.compras || [] };
   }
 
   /* "23:00-05:30" ou "23h às 5h30" → { de: 1380, ate: 330 } em minutos do dia; texto vazio desliga */
@@ -170,11 +274,70 @@ var Nucleo = (function () {
   function aplicar(dados, pedido, agora, novoId) {
     var a = pedido.a, i;
     var hoje = agora.slice(0, 10);
+    garantirExtras(dados);
+    var cfg = dados.config;
     if (a === 'marcar') {
       i = achar(dados.tarefas, pedido.id);
       exigir(i >= 0, 'Tarefa não encontrada. Atualize a página.');
-      dados.tarefas[i].feita = !!pedido.feita;
-      dados.tarefas[i].feita_em = pedido.feita ? agora : '';
+      var tm = dados.tarefas[i];
+      tm.feita = !!pedido.feita;
+      tm.feita_em = pedido.feita ? agora : '';
+      // estrela para a dona da tarefa; tarefa individual também soma na meta do casal
+      tirarLancamentos(dados, 'tarefa', tm.id);
+      if (tm.feita) {
+        lancar(dados, novoId, agora, tm.quem, num(cfg.estrelas_tarefa, 1), 'tarefa', tm.id, tm.tarefa);
+        var extra = num(cfg.estrelas_meta, 1);
+        if (tm.quem !== 'casal' && extra) lancar(dados, novoId, agora, 'casal', extra, 'tarefa', tm.id, tm.tarefa);
+      }
+    } else if (a === 'treino') {
+      exigir(pedido.quem === 'p1' || pedido.quem === 'p2', 'Escolha de quem é o treino.');
+      var ref = 'treino:' + hoje + ':' + pedido.quem;
+      tirarLancamentos(dados, 'treino', ref);
+      if (pedido.feito) lancar(dados, novoId, agora, pedido.quem, num(cfg.estrelas_treino, 3), 'treino', ref, 'Treino do dia');
+    } else if (a === 'lista_nova') {
+      var nomeLista = limpar(pedido.lista);
+      exigir(nomeLista, 'Escolha a lista.');
+      var novos = pedido.itens || String(pedido.item || '').split('\n'), pendentes = {};
+      for (i = 0; i < dados.listas.length; i++) {
+        if (dados.listas[i].lista === nomeLista && !dados.listas[i].feito) pendentes[dados.listas[i].item.toLowerCase()] = true;
+      }
+      var criados = 0;
+      for (i = 0; i < novos.length; i++) {
+        var txt = limpar(novos[i]);
+        if (!txt || pendentes[txt.toLowerCase()]) continue;
+        pendentes[txt.toLowerCase()] = true;
+        dados.listas.push({ id: novoId(), lista: nomeLista, item: txt, feito: false, criado_em: agora, feito_em: '' });
+        criados++;
+      }
+      exigir(criados || novos.length > 1, 'Esse item já está na lista.');
+    } else if (a === 'lista_marcar') {
+      i = achar(dados.listas, pedido.id);
+      exigir(i >= 0, 'Item não encontrado. Atualize a página.');
+      dados.listas[i].feito = !!pedido.feito;
+      dados.listas[i].feito_em = pedido.feito ? agora : '';
+    } else if (a === 'lista_apagar') {
+      i = achar(dados.listas, pedido.id);
+      exigir(i >= 0, 'Item não encontrado. Atualize a página.');
+      dados.listas.splice(i, 1);
+    } else if (a === 'lista_limpar') {
+      for (i = dados.listas.length - 1; i >= 0; i--) {
+        if (dados.listas[i].lista === pedido.lista && dados.listas[i].feito) dados.listas.splice(i, 1);
+      }
+    } else if (a === 'recompensa_nova') {
+      exigir(limpar(pedido.nome), 'Escreva a recompensa.');
+      exigir(QUEM.indexOf(pedido.quem) >= 0, 'Escolha para quem é a recompensa.');
+      exigir(num(pedido.custo, 0) > 0, 'Quantas estrelas ela custa?');
+      dados.recompensas.push({ id: novoId(), nome: limpar(pedido.nome), quem: pedido.quem, custo: num(pedido.custo, 0) });
+    } else if (a === 'recompensa_apagar') {
+      i = achar(dados.recompensas, pedido.id);
+      exigir(i >= 0, 'Recompensa não encontrada. Atualize a página.');
+      dados.recompensas.splice(i, 1);
+    } else if (a === 'resgatar') {
+      i = achar(dados.recompensas, pedido.id);
+      exigir(i >= 0, 'Recompensa não encontrada. Atualize a página.');
+      var rec = dados.recompensas[i], saldo = saldoDe(dados, rec.quem), custo = num(rec.custo, 0);
+      exigir(saldo >= custo, 'Faltam ' + (custo - saldo) + ' estrelas.');
+      lancar(dados, novoId, agora, rec.quem, -custo, 'resgate', rec.id, rec.nome);
     } else if (a === 'nova') {
       exigir(limpar(pedido.tarefa), 'Escreva a tarefa.');
       exigir(QUEM.indexOf(pedido.quem) >= 0, 'Escolha para quem é a tarefa.');
@@ -236,6 +399,6 @@ var Nucleo = (function () {
     SIGLAS: SIGLAS, SIGLAS_BONITAS: SIGLAS_BONITAS, DIAS: DIAS, MESES: MESES, QUEM: QUEM,
     pad: pad, paraData: paraData, paraTexto: paraTexto, somarDias: somarDias, diaDaSemana: diaDaSemana,
     lerDias: lerDias, textoDias: textoDias, dataPorExtenso: dataPorExtenso, lerFaixa: lerFaixa,
-    garantirRotina: garantirRotina, montarEstado: montarEstado, aplicar: aplicar
+    garantirRotina: garantirRotina, montarEstado: montarEstado, aplicar: aplicar, montarPlano: montarPlano, nomesListas: nomesListas
   };
 })();
