@@ -197,6 +197,33 @@ var Painel = (function () {
     return pedir('GET', urlGet('estado'));
   }
 
+  /* Agenda de um período (tela Agenda): { dias: { "aaaa-mm-dd": [eventos] } } */
+  function agenda(de, ate) {
+    if (demo) return Promise.resolve({ ok: true, de: de, ate: ate, dias: agendaDemoPeriodo(de, ate) });
+    return pedir('GET', urlGet('agenda') + '&de=' + de + '&ate=' + ate);
+  }
+
+  /* Exemplo: os 3 dias do painel + uma semana típica inventada, igual toda semana. */
+  function agendaDemoPeriodo(de, ate) {
+    var hoje = Nucleo.paraTexto(new Date()), fixos = agendaDemo(hoje), saida = {};
+    for (var d = de, n = 0; d <= ate && n < 50; d = Nucleo.somarDias(d, 1), n++) {
+      if (fixos[d]) { saida[d] = fixos[d]; continue; }
+      var s = Nucleo.diaDaSemana(d), dia = +d.slice(8), l = [];
+      if (s >= 1 && s <= 5) l.push({ titulo: 'Academia', local: '', dia_inteiro: false, inicio: '06:00', fim: '07:00', quem: 'casal' });
+      if (s === 1 || s === 3) l.push({ titulo: 'Reunião de obra', local: 'Escritório', dia_inteiro: false, inicio: '09:00', fim: '10:30', quem: 'p1' });
+      if (s === 2 || s === 4) l.push({ titulo: 'Aulas', local: 'Escola', dia_inteiro: false, inicio: '13:00', fim: '18:00', quem: 'p2' });
+      if (s === 3) l.push({ titulo: 'Call com cliente', local: 'Online', dia_inteiro: false, inicio: '10:00', fim: '11:00', quem: 'p2' });
+      if (s === 5) l.push({ titulo: 'Visita técnica', local: 'Obra', dia_inteiro: false, inicio: '14:00', fim: '16:00', quem: 'p1' });
+      if (s === 6) l.push({ titulo: 'Feira', local: '', dia_inteiro: false, inicio: '09:00', fim: '10:00', quem: 'casal' });
+      if (s === 0) l.push({ titulo: 'Almoço em família', local: '', dia_inteiro: false, inicio: '12:30', fim: '15:00', quem: 'casal' });
+      if (dia === 2) l.push({ titulo: 'Jantar fora', local: '', dia_inteiro: false, inicio: '20:00', fim: '22:00', quem: 'casal' });
+      if (dia === 15) l.unshift({ titulo: 'Pagamento', local: '', dia_inteiro: true, inicio: '', fim: '', quem: 'casal' });
+      if (dia === 25) l.push({ titulo: 'Dentista', local: 'Clínica', dia_inteiro: false, inicio: '11:00', fim: '12:00', quem: 'p2' });
+      saida[d] = l;
+    }
+    return saida;
+  }
+
   function versao() {
     if (demo) return Promise.resolve({ ok: true, versao: versaoDemo() });
     return pedir('GET', urlGet('versao'));
@@ -243,7 +270,7 @@ var Painel = (function () {
 
   return {
     demo: demo,
-    estado: estado, versao: versao, enviar: enviar,
+    estado: estado, versao: versao, enviar: enviar, agenda: agenda,
     aoMudarEmOutraAba: aoMudarEmOutraAba, reiniciarDemo: reiniciarDemo,
     guardarCache: function (e) { gravar(CHAVE_CACHE, e); },
     lerCache: function () { return ler(CHAVE_CACHE); },

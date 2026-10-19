@@ -154,6 +154,46 @@
   .pontos b.at { background: #aeaeb2; }
   .pontos span { font-size: .9rem; color: #98989f; font-weight: 600; }
 
+  /* ---------- agenda completa ---------- */
+
+  function desenharCalendario() {
+    if (!cal.ref) cal.ref = hojeLocal();
+    var p = Calendario.periodo(cal.vista, cal.ref), chave = p.de + '|' + p.ate, g = cal.dados[chave];
+    var vistas = [['mes', 'Mês'], ['semana', 'Semana'], ['dia', 'Dia']], html = '<div class="cal-topo">' +
+      '<button class="btn-cal" data-cal-nav="0">Hoje</button><button class="nav-cal" data-cal-nav="-1">‹</button><button class="nav-cal" data-cal-nav="1">›</button>' +
+      '<div class="titulo-cal">' + esc(p.titulo) + '</div><div class="filtros">';
+    ['p1', 'p2', 'casal'].forEach(function (q) {
+      html += '<button class="filtro t-' + q + (cal.filtro[q] ? ' ligado' : ' desligado') + '" data-cal-filtro="' + q + '"><i></i>' + esc(estado.nomes[q]) + '</button>';
+    });
+    html += '</div><div class="seg">';
+    vistas.forEach(function (v) { html += '<button data-cal-vista="' + v[0] + '" class="' + (cal.vista === v[0] ? 'sel' : '') + '">' + v[1] + '</button>'; });
+    html += '</div></div><div class="cal-caixa">';
+    if (!g) html += '<div class="vazio">Carregando a agenda…</div>';
+    else if (g.erro) html += '<div class="vazio">' + esc(g.erro) + '</div>';
+    else if (cal.vista === 'mes') html += Calendario.htmlMes(p, g.dias, { hoje: hojeLocal(), filtro: cal.filtro, max: 3 });
+    else html += Calendario.htmlGrade(Calendario.dias(p.de, p.ate), g.dias,
+      { hoje: hojeLocal(), filtro: cal.filtro, agora: minutosAgora(), detalhes: cal.vista === 'dia' });
+    if (g && cal.buscando === chave) html += '<div class="cal-aviso">atualizando…</div>';
+    $('pg-agenda').innerHTML = html + '</div>';
+    if (!g || Date.now() - g.quando > COMPLETO_MS) buscarCalendario(p, chave);
+  }
+
+  function buscarCalendario(p, chave) {
+    if (cal.buscando === chave) return;
+    cal.buscando = chave;
+    Painel.agenda(p.de, p.ate).then(function (r) {
+      cal.buscando = null;
+      cal.dados[chave] = r.dias ? { dias: r.dias, quando: Date.now() } :
+        { dias: {}, quando: Date.now(), erro: 'Atualize o script do Google para ver a agenda completa.' };
+      if (tela === 'agenda') desenharCalendario();
+    }, function (err) {
+      cal.buscando = null;
+      situacao(err);
+      if (!cal.dados[chave]) cal.dados[chave] = { dias: {}, quando: Date.now() - COMPLETO_MS + 60000, erro: 'Não consegui ler a agenda. Tentando de novo…' };
+      if (tela === 'agenda') desenharCalendario();
+    });
+  }
+
   /* ---------- treino & dieta ---------- */
   .faixa { flex: none; display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
   .faixa h1 { margin: 0; font-size: 2.2rem; font-weight: 700; letter-spacing: -.025em; }
@@ -244,6 +284,70 @@
   .hist li b.menos { color: #ff6961; }
   .hist li b.mais { color: #ffd60a; }
 
+  /* ---------- agenda completa (mês, semana, dia) ---------- */
+  .cal-topo { flex: none; display: flex; align-items: center; margin-bottom: 1rem; }
+  .cal-topo .titulo-cal { font-size: 2.1rem; font-weight: 700; letter-spacing: -.025em; margin-left: 1.2rem; white-space: nowrap; }
+  .btn-cal { background: #1c1c1e; border-radius: 1rem; padding: .65rem 1.3rem; font-size: 1.15rem; font-weight: 600; }
+  .nav-cal { width: 3rem; height: 3rem; border-radius: 50%; font-size: 1.9rem; line-height: 1; background: #1c1c1e; margin-left: .5rem; }
+  .btn-cal:hover, .nav-cal:hover, .filtro:hover { background: #2c2c2e; }
+  .filtros { margin-left: auto; margin-right: 1rem; display: flex; }
+  .filtro { display: flex; align-items: center; font-size: 1.1rem; font-weight: 600; padding: .5rem .8rem; border-radius: .8rem; margin-left: .2rem; }
+  .filtro i { width: 1.1rem; height: 1.1rem; border-radius: .3rem; margin-right: .5rem; border: .15rem solid; }
+  .filtro.t-p1 i { border-color: #ff9f0a; } .filtro.t-p2 i { border-color: #40c8e0; } .filtro.t-casal i { border-color: #bf5af2; }
+  .filtro.ligado.t-p1 i { background: #ff9f0a; } .filtro.ligado.t-p2 i { background: #40c8e0; } .filtro.ligado.t-casal i { background: #bf5af2; }
+  .filtro.desligado { opacity: .45; }
+  .cal-caixa { flex: 1; min-height: 0; background: #1c1c1e; border-radius: 1.5rem; padding: .8rem 1rem 1rem; display: flex; flex-direction: column; position: relative; }
+  .cal-aviso { position: absolute; top: .8rem; right: 1.2rem; color: #636366; font-size: 1rem; font-weight: 600; }
+  .cal-mes { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+  .cal-mes-cab { display: flex; flex: none; }
+  .cal-mes-cab div { flex: 1; font-size: .95rem; color: #98989f; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; padding: .2rem .6rem .5rem; }
+  .cal-mes-grade { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+  .cal-semana { flex: 1; min-height: 0; display: flex; border-top: .06rem solid #2c2c2e; }
+  .cal-cel { flex: 1; min-width: 0; padding: .35rem .45rem; overflow: hidden; cursor: pointer; border-left: .06rem solid #2c2c2e; }
+  .cal-cel:first-child { border-left: 0; }
+  .cal-cel:hover { background: #2c2c2e; }
+  .cal-cel.fora { opacity: .38; }
+  .cal-num { font-size: 1.15rem; font-weight: 600; margin-bottom: .15rem; }
+  .cal-num span { display: inline-block; min-width: 2rem; height: 2rem; line-height: 2rem; text-align: center; border-radius: 1rem; }
+  .cal-cel.hoje .cal-num span { background: #ff453a; color: #fff; }
+  .cal-ev { font-size: 1rem; line-height: 1.4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 .3rem; border-radius: .35rem; }
+  .cal-ev i { display: inline-block; width: .55rem; height: .55rem; border-radius: 50%; margin-right: .35rem; vertical-align: .08rem; }
+  .cal-ev .h { color: #98989f; margin-right: .35rem; }
+  .cal-ev.inteiro { font-weight: 600; margin-bottom: .12rem; }
+  .cal-mais { font-size: .95rem; color: #98989f; font-weight: 600; padding-left: .3rem; }
+  i.q-p1 { background: #ff9f0a; } i.q-p2 { background: #40c8e0; } i.q-casal { background: #bf5af2; }
+  .cal-ev.inteiro.q-p1, .cal-bloco.q-p1 { background: #4a3214; } .cal-ev.inteiro.q-p2, .cal-bloco.q-p2 { background: #143f47; }
+  .cal-ev.inteiro.q-casal, .cal-bloco.q-casal { background: #3b1f49; }
+  .cal-grade { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+  .cal-g-cab, .cal-g-inteiro { display: flex; flex: none; }
+  .cal-g-inteiro { border-bottom: .06rem solid #2c2c2e; padding-bottom: .3rem; }
+  .cal-g-canto { flex: none; width: 4.6rem; font-size: .85rem; color: #636366; font-weight: 600; text-align: right; padding: .3rem .6rem 0 0; }
+  .cal-g-dia { flex: 1; text-align: center; padding: .2rem 0 .5rem; cursor: pointer; border-radius: .8rem; }
+  .cal-g-dia:hover { background: #2c2c2e; }
+  .cal-g-dia span { display: block; font-size: .95rem; color: #98989f; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+  .cal-g-dia b { display: inline-block; font-size: 1.6rem; min-width: 2.7rem; height: 2.7rem; line-height: 2.7rem; border-radius: 1.4rem; margin-top: .1rem; }
+  .cal-g-dia.hoje span { color: #ff453a; } .cal-g-dia.hoje b { background: #ff453a; color: #fff; }
+  .um-dia .cal-g-dia { text-align: left; padding-left: .8rem; }
+  .cal-g-cel { flex: 1; min-width: 0; padding: 0 .2rem; }
+  .cal-g-corpo { flex: 1; min-height: 0; display: flex; position: relative; margin-top: .6rem; }
+  .cal-g-horas { flex: none; width: 4.6rem; position: relative; }
+  .cal-g-hora { position: absolute; right: .6rem; margin-top: -.55rem; font-size: .85rem; color: #636366; font-weight: 600; }
+  .cal-g-colunas { flex: 1; position: relative; display: flex; }
+  .cal-g-linha { position: absolute; left: 0; right: 0; border-top: .06rem solid #2c2c2e; }
+  .cal-g-col { flex: 1; position: relative; border-left: .06rem solid #2c2c2e; }
+  .cal-g-col.hoje { background: rgba(255, 255, 255, .025); }
+  .cal-bloco { position: absolute; padding: .2rem .45rem; border-radius: .5rem; overflow: hidden; font-size: 1rem; line-height: 1.25;
+    border-left: .3rem solid; border-right: .15rem solid #1c1c1e; border-bottom: .12rem solid #1c1c1e; min-height: 1.4rem; }
+  .cal-bloco.q-p1 { border-left-color: #ff9f0a; } .cal-bloco.q-p2 { border-left-color: #40c8e0; } .cal-bloco.q-casal { border-left-color: #bf5af2; }
+  .cal-bloco b { display: block; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cal-bloco span { display: block; color: #d1d1d6; font-size: .9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cal-bloco.curto span { display: none; }
+  .um-dia .cal-bloco { font-size: 1.35rem; padding: .35rem .7rem; } .um-dia .cal-bloco span { font-size: 1.1rem; }
+  .um-dia .cal-bloco.curto span { display: inline; margin-left: .6rem; } .um-dia .cal-bloco.curto b { display: inline; }
+  .cal-agora { position: absolute; left: 0; right: 0; height: .16rem; background: #ff453a; z-index: 2; }
+  .cal-agora:before { content: ""; position: absolute; left: -.45rem; top: -.37rem; width: .9rem; height: .9rem; border-radius: 50%; background: #ff453a; }
+  #agenda { cursor: pointer; }
+
   /* ---------- avisos ---------- */
   #status { position: fixed; right: 1.4vw; bottom: .6vh; font-size: .8rem; color: #3a3a3c; z-index: 6; }
   #status.erro { color: #ff6961; font-size: 1rem; }
@@ -311,6 +415,7 @@
   <nav id="menu">
     <svg class="marca" viewBox="0 0 64 64"><path d="M32 8 56 28h-6v26H14V28H8z" fill="#ffd60a"/><path d="m23 37 7 7 12-13" fill="none" stroke="#000" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>
     <button data-tela="hoje" class="ativo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>Hoje</button>
+    <button data-tela="agenda"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/><circle cx="8.5" cy="14.5" r=".9" fill="currentColor"/><circle cx="12" cy="14.5" r=".9" fill="currentColor"/></svg>Agenda</button>
     <button data-tela="treino"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6.5 6.5v11M17.5 6.5v11M3.5 9v6M20.5 9v6M6.5 12h11"/></svg>Treino</button>
     <button data-tela="cardapio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v8M4.5 3v5a2.5 2.5 0 0 0 5 0V3M7 11v10M17 21V3c-2.2 1.2-3.5 3.7-3.5 7v3H17"/></svg>Cardápio</button>
     <button data-tela="listas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m4 6 1.5 1.5L8 5M4 12l1.5 1.5L8 11M4 18l1.5 1.5L8 17M11 6h9M11 12h9M11 18h9"/></svg>Listas</button>
@@ -333,7 +438,7 @@
           </div>
           <div class="cartao casal" id="b-casal"></div>
         </div>
-        <div class="cartao" id="agenda"></div>
+        <div class="cartao" id="agenda" data-tela="agenda"></div>
       </div>
       <div id="rodape">
         <div class="cartao" id="recado"></div>
@@ -343,6 +448,7 @@
       </div>
     </div>
 
+    <div class="pagina" id="pg-agenda"></div>
     <div class="pagina" id="pg-treino"></div>
     <div class="pagina" id="pg-cardapio"></div>
     <div class="pagina" id="pg-listas"></div>
@@ -357,9 +463,10 @@
 <div id="demo">MODO DEMONSTRAÇÃO</div>
 <div id="status"></div>
 
-<script src="config.js?v=7"></script>
-<script src="nucleo.js?v=7"></script>
-<script src="painel.js?v=7"></script>
+<script src="config.js?v=8"></script>
+<script src="nucleo.js?v=8"></script>
+<script src="painel.js?v=8"></script>
+<script src="calendario.js?v=8"></script>
 <script>
 (function () {
   var esc = Painel.esc, pad = Nucleo.pad;
@@ -369,7 +476,8 @@
   var estado = Painel.lerCache(), versao = null, ultimoCompleto = 0, ocupado = false, enviando = 0;
   var completoAntes = null, ultimoMinuto = '', modo = '', tela = 'hoje', climaDados = null, pessoaCardapio = 'p1';
   var forcado = (location.search.match(/[?&]tela=(\w+)/) || [])[1];  // ?tela=bomdia para testar
-  var NOMES_TELA = ['hoje', 'treino', 'cardapio', 'listas', 'estrelas'];
+  var NOMES_TELA = ['hoje', 'agenda', 'treino', 'cardapio', 'listas', 'estrelas'];
+  var cal = { vista: 'semana', ref: null, filtro: { p1: true, p2: true, casal: true }, dados: {}, buscando: null };
 
   function $(id) { return document.getElementById(id); }
   function hojeLocal() { return Nucleo.paraTexto(new Date()); }
@@ -403,6 +511,7 @@
     if (estado) {
       desenharAgenda(); desenharRefeicao();
       if (tela === 'treino') desenharTreino();
+      if (tela === 'agenda') desenharCalendario();
       if (modo === 'bomdia') desenharBomDia();
     }
   }
@@ -442,6 +551,7 @@
 
   function desenharTela() {
     if (tela === 'hoje') desenharHoje();
+    else if (tela === 'agenda') desenharCalendario();
     else if (tela === 'treino') desenharTreino();
     else if (tela === 'cardapio') desenharCardapio();
     else if (tela === 'listas') desenharListas();
@@ -531,10 +641,19 @@
     tocou();
     var el = subirAte(ev.target, function (x) {
       return attr(x, 'data-tela') || attr(x, 'data-tarefa') || attr(x, 'data-item') || attr(x, 'data-treino') ||
-        attr(x, 'data-pessoa') || attr(x, 'data-acao');
+        attr(x, 'data-pessoa') || attr(x, 'data-acao') || attr(x, 'data-cal-nav') || attr(x, 'data-cal-vista') ||
+        attr(x, 'data-cal-filtro') || attr(x, 'data-cal-dia');
     });
     if (!el || !estado) return;
-    if (attr(el, 'data-tela')) irPara(attr(el, 'data-tela'));
+    if (attr(el, 'data-cal-nav')) {
+      var n = +attr(el, 'data-cal-nav');
+      cal.ref = n ? Calendario.mover(cal.vista, cal.ref, n) : hojeLocal();
+      desenharCalendario();
+    }
+    else if (attr(el, 'data-cal-vista')) { cal.vista = attr(el, 'data-cal-vista'); desenharCalendario(); }
+    else if (attr(el, 'data-cal-filtro')) { var q = attr(el, 'data-cal-filtro'); cal.filtro[q] = !cal.filtro[q]; desenharCalendario(); }
+    else if (attr(el, 'data-cal-dia')) { cal.vista = 'dia'; cal.ref = attr(el, 'data-cal-dia'); desenharCalendario(); }
+    else if (attr(el, 'data-tela')) irPara(attr(el, 'data-tela'));
     else if (attr(el, 'data-tarefa')) marcarTarefa(attr(el, 'data-tarefa'));
     else if (attr(el, 'data-item')) marcarItem(attr(el, 'data-item'));
     else if (attr(el, 'data-treino')) marcarTreino(attr(el, 'data-treino'));
@@ -840,6 +959,46 @@
         }, 450);
       })(n);
     }
+  }
+
+  /* ---------- agenda completa ---------- */
+
+  function desenharCalendario() {
+    if (!cal.ref) cal.ref = hojeLocal();
+    var p = Calendario.periodo(cal.vista, cal.ref), chave = p.de + '|' + p.ate, g = cal.dados[chave];
+    var vistas = [['mes', 'Mês'], ['semana', 'Semana'], ['dia', 'Dia']], html = '<div class="cal-topo">' +
+      '<button class="btn-cal" data-cal-nav="0">Hoje</button><button class="nav-cal" data-cal-nav="-1">‹</button><button class="nav-cal" data-cal-nav="1">›</button>' +
+      '<div class="titulo-cal">' + esc(p.titulo) + '</div><div class="filtros">';
+    ['p1', 'p2', 'casal'].forEach(function (q) {
+      html += '<button class="filtro t-' + q + (cal.filtro[q] ? ' ligado' : ' desligado') + '" data-cal-filtro="' + q + '"><i></i>' + esc(estado.nomes[q]) + '</button>';
+    });
+    html += '</div><div class="seg">';
+    vistas.forEach(function (v) { html += '<button data-cal-vista="' + v[0] + '" class="' + (cal.vista === v[0] ? 'sel' : '') + '">' + v[1] + '</button>'; });
+    html += '</div></div><div class="cal-caixa">';
+    if (!g) html += '<div class="vazio">Carregando a agenda…</div>';
+    else if (g.erro) html += '<div class="vazio">' + esc(g.erro) + '</div>';
+    else if (cal.vista === 'mes') html += Calendario.htmlMes(p, g.dias, { hoje: hojeLocal(), filtro: cal.filtro, max: 3 });
+    else html += Calendario.htmlGrade(Calendario.dias(p.de, p.ate), g.dias,
+      { hoje: hojeLocal(), filtro: cal.filtro, agora: minutosAgora(), detalhes: cal.vista === 'dia' });
+    if (g && cal.buscando === chave) html += '<div class="cal-aviso">atualizando…</div>';
+    $('pg-agenda').innerHTML = html + '</div>';
+    if (!g || Date.now() - g.quando > COMPLETO_MS) buscarCalendario(p, chave);
+  }
+
+  function buscarCalendario(p, chave) {
+    if (cal.buscando === chave) return;
+    cal.buscando = chave;
+    Painel.agenda(p.de, p.ate).then(function (r) {
+      cal.buscando = null;
+      cal.dados[chave] = r.dias ? { dias: r.dias, quando: Date.now() } :
+        { dias: {}, quando: Date.now(), erro: 'Atualize o script do Google para ver a agenda completa.' };
+      if (tela === 'agenda') desenharCalendario();
+    }, function (err) {
+      cal.buscando = null;
+      situacao(err);
+      if (!cal.dados[chave]) cal.dados[chave] = { dias: {}, quando: Date.now() - COMPLETO_MS + 60000, erro: 'Não consegui ler a agenda. Tentando de novo…' };
+      if (tela === 'agenda') desenharCalendario();
+    });
   }
 
   /* ---------- treino & dieta ---------- */
